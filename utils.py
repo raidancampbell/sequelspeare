@@ -23,3 +23,20 @@ def build_vocab_chars(string):
     char_to_id = dict(zip(words, range(len(words))))
 
     return char_to_id
+
+
+# segments the data into training, and validation datasets, following the 95%-5% rule
+def segment_data(data_filename):
+    with open(data_filename, 'r') as datafile:
+        for i, l in enumerate(datafile, 1):        # i is the number of lines
+            pass
+        file_text = datafile.read()
+        with open('training_data', 'w') as training_file:
+            with open('validation_data', 'w') as validation_file:
+                iterator = 0
+                for line in file_text.split('\n'):
+                    if i / iterator <= 0.95:
+                        training_file.write(line + '\n')
+                    else:
+                        validation_file.write(line + '\n')
+
