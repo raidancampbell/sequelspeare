@@ -5,6 +5,7 @@ from sequelspeare.model import Model
 
 
 # This object creates a TF session: you will run into issues if you instantiate it while training
+# To sample some text from it, instantiate the object, and call sample(), setting the priming text and number of symbols as necessary
 class Sampler:
 
     SAVE_DIR = 'savedata'
@@ -23,18 +24,21 @@ class Sampler:
             self.chars, self.vocab = cPickle.load(file)
             self.model = Model(len(self.chars), is_sampled=True)
             self.sess = tf.Session()
-            self.sess.as_default()
             tf.initialize_all_variables().run(session=self.sess)
             self.checkpoint = tf.train.get_checkpoint_state(self.save_dir)
             if self.checkpoint and self.checkpoint.model_checkpoint_path:
                 tf.train.Saver(tf.all_variables()).restore(self.sess, self.checkpoint.model_checkpoint_path)
 
-    def sample(self):
+    def sample(self, prime_text=None, num_sample_symbols=None):
+        # default to the initialized values, which default to hardcoded values if nothing was ever set
+        prime_text = prime_text or self.prime_text
+        num_sample_symbols = num_sample_symbols or self.num_sample_symbols
+
         if not self.sess or not self.checkpoint:
             print('ERROR! Failed to initialize Tensorflow session!')
             return 'ERROR! Failed to initialize Tensorflow session!'
         else:
-            return self.model.sample(self.sess, self.chars, self.vocab, self.num_sample_symbols, self.prime_text, self.sample_style)
+            return self.model.sample(self.sess, self.chars, self.vocab, num_sample_symbols, prime_text, self.sample_style)
 
 if __name__ == '__main__':
     x = Sampler()
