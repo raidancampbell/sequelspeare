@@ -1,42 +1,75 @@
+import codecs
+import os
 import collections
+from six.moves import cPickle
+import numpy as np
 
 
-# builds a dictionary of word to unique word ID
-def build_vocab_words(string):
-    data = string.split()
-    counter = collections.Counter(data)
-    count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
+class TextLoader:
+    def __init__(self, data_dir, batch_size, seq_length):
+        self.data_dir = data_dir
+        self.batch_size = batch_size
+        self.seq_length = seq_length
+        # initialize variables, to prevent
+        self.pointer = 0
+        self.chars = []
+        self.vocab_size = 0
+        self.vocab = {}
+        self.tensor = []
+        self.num_batches = 0
+        self.x_batches = 0
+        self.y_batches = 0
 
-    words, _ = list(zip(*count_pairs))
-    word_to_id = dict(zip(words, range(len(words))))
+        input_file = os.path.join(data_dir, "input.log")
+        vocab_file = os.path.join(data_dir, "vocab.pkl")
+        tensor_file = os.path.join(data_dir, "data.npy")
 
-    return word_to_id
+        print("preprocessing text file...")
+        self.preprocess_char(input_file, vocab_file, tensor_file)
+        print("preprocessed text file.")
+        self.create_batches()
 
+    def preprocess_char(self, input_file, vocab_file, tensor_file):
+        with codecs.open(input_file, "r", encoding='utf-8') as f:
+            data = f.read()
+            counter = collections.Counter(data)
+            count_pairs = sorted(counter.items(), key=lambda x: -x[1])
+            self.chars, _ = zip(*count_pairs)
+            self.vocab_size = len(self.chars)
+            self.vocab = dict(zip(self.chars, range(len(self.chars))))
+            with open(vocab_file, 'wb') as vocab_file_opened:
+                cPickle.dump(self.chars, vocab_file_opened)
+            self.tensor = np.array(list(map(self.vocab.get, data)))
+            np.save(tensor_file, self.tensor)
 
-# builds a dictionary of word to unique word ID
-def build_vocab_chars(string):
-    data = list(string)
-    counter = collections.Counter(data)
-    count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
+    def preprocess_word(self, input_file, vocab_file, tensor_file):
+        with codecs.open(input_file, "r", encoding='utf-8') as f:
+            data = f.read()
+            counter = collections.Counter(data.split())
+            count_pairs = sorted(counter.items(), key=lambda x: -x[1])
+            self.chars, _ = zip(*count_pairs)
+            self.vocab_size = len(self.chars)
+            self.vocab = dict(zip(self.chars, range(len(self.chars))))
+            with open(vocab_file, 'wb') as vocab_file_opened:
+                cPickle.dump(self.chars, vocab_file_opened)
+            self.tensor = np.array(list(map(self.vocab.get, data)))
+            np.save(tensor_file, self.tensor)
 
-    words, _ = list(zip(*count_pairs))
-    char_to_id = dict(zip(words, range(len(words))))
+    def create_batches(self):
+        self.num_batches = int(self.tensor.size / (self.batch_size * self.seq_length))
 
-    return char_to_id
+        self.tensor = self.tensor[:self.num_batches * self.batch_size * self.seq_length]
+        x_data = self.tensor
+        y_data = np.copy(self.tensor)
+        y_data[:-1] = x_data[1:]
+        y_data[-1] = x_data[0]
+        self.x_batches = np.split(x_data.reshape(self.batch_size, -1), self.num_batches, 1)
+        self.y_batches = np.split(y_data.reshape(self.batch_size, -1), self.num_batches, 1)
 
+    def next_batch(self):
+        x, y = self.x_batches[self.pointer], self.y_batches[self.pointer]
+        self.pointer += 1
+        return x, y
 
-# segments the data into training, and validation datasets, following the 95%-5% rule
-def segment_data(data_filename):
-    with open(data_filename, 'r') as datafile:
-        for i, l in enumerate(datafile, 1):        # i is the number of lines
-            pass
-        file_text = datafile.read()
-        with open('training_data', 'w') as training_file:
-            with open('validation_data', 'w') as validation_file:
-                iterator = 0
-                for line in file_text.split('\n'):
-                    if i / iterator <= 0.95:
-                        training_file.write(line + '\n')
-                    else:
-                        validation_file.write(line + '\n')
-
+    def reset_batch_pointer(self):
+        self.pointer = 0
