@@ -4,25 +4,35 @@ import os
 from sequelspeare.model import Model
 from sequelspeare.utils import TextLoader
 from six.moves import cPickle
+import csv
 
-EPOCHS = 10
-LEARNING_RATE = 0.05
-DECAY_RATE = 0.9
+# hyperparameters that shouldn't really be dynamically adjusted
+EPOCHS = 3  # this should be longer for actual training. Like 20+.
+LEARNING_RATE = 0.002
+DECAY_RATE = 0.95
 SAVE_DIR = 'savedata'
-SAVE_FREQ = 500
+SAVE_FREQ = 1000
 
+# load the data, and save the symbol tables
 data_loader = TextLoader('.', Model.BATCH_SIZE, Model.SEQUENCE_LENGTH)
 model = Model(data_loader.vocab_size)
-
 with open(os.path.join(SAVE_DIR, 'chars_vocab.pkl'), 'wb') as f:
     cPickle.dump((data_loader.chars, data_loader.vocab), f)
 
-# with tf.device("/gpu:0"):
+# housekeeping on training metadata to draw graphs and statistics
+out_file = open('training_metadata.csv', 'w')
+csv_writer = csv.writer(out_file)
+csv_writer.writerow(['loss', 'time_taken'])
+losses = []
+times = []
+
+# learning happens here
 with tf.Session() as sess:
     tf.initialize_all_variables().run()
     for epoch in range(EPOCHS):
+        # tell the model its properly decayed learning rate
         sess.run(tf.assign(model.lr, LEARNING_RATE * (DECAY_RATE ** epoch)))
-        data_loader.reset_batch_pointer()
+        data_loader.reset_batch_pointer()  # begin at batch 0
         state = sess.run(model.initial_state)
         for b in range(data_loader.num_batches):
             start = time.time()
@@ -34,6 +44,8 @@ with tf.Session() as sess:
 
             train_loss, state, _ = sess.run([model.cost, model.final_state, model.train_op], feed)
             end = time.time()
+            losses.append(train_loss)
+            times.append(end - start)
             print("{}/{} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}".format(epoch * data_loader.num_batches + b,
                                                                                       EPOCHS * data_loader.num_batches,
                                                                                       epoch, train_loss, end - start))
@@ -42,4 +54,11 @@ with tf.Session() as sess:
             if (epoch * data_loader.num_batches + b) % SAVE_FREQ == 0 or (epoch == EPOCHS - 1 and b == data_loader.num_batches - 1):
                 checkpoint_path = os.path.join(SAVE_DIR, 'model.ckpt')
                 tf.train.Saver(tf.all_variables()).save(sess, checkpoint_path, global_step=epoch * data_loader.num_batches + b)
-                print("model saved to {}".format(checkpoint_path))
+                print("saved to {}".format(checkpoint_path))
+                if csv_writer:
+                    for time_, loss_ in zip(times, losses):
+                        csv_writer.writerow([loss_, time_])
+                    losses.clear()
+                    times.clear()
+
+out_file.close()
