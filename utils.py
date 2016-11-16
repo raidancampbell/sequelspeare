@@ -35,7 +35,7 @@ class TextLoader:
     def _remove_timestamps(string, remove_username=False):
         result = ''
         for line in string.split('\n'):
-            result += ' '.join(line.split()[2 if remove_username else 1:])
+            result += ' '.join(line.split()[2 if remove_username else 1:]) + '\n'
         return result
 
     # preprocesses the data into lookup dicts of char-to-int
@@ -64,6 +64,8 @@ class TextLoader:
         y_data = np.copy(self.tensor)  # do a deep copy.  Alternatively you could use a gnarly indexing algorithm
         y_data[:-1] = x_data[1:]  # y_data, the target data, is simply the next value of x_data, the source data
         y_data[-1] = x_data[0]  # the last element of target data is wrapped to be the first element of the source
+        # TODO: investigate trimming the last element instead of wrapping it.  Dataset is likely too large to notice a difference
+        # this would imbalance the batching.
         self.x_batches = np.split(x_data.reshape(self.batch_size, -1), self.num_batches, 1)  # split the data into batches
         self.y_batches = np.split(y_data.reshape(self.batch_size, -1), self.num_batches, 1)  # again, the only difference is off-by-one
 
