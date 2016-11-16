@@ -5,23 +5,27 @@ from tensorflow.python.ops import seq2seq
 
 
 class Model:
-    LAYER_WIDTH = 64
+    LAYER_WIDTH = 256
     NUM_LAYERS = 2
-    BATCH_SIZE = 100
+    BATCH_SIZE = 50
     SEQUENCE_LENGTH = 50
     GRADIENT_CLIP = 5.0
-    PRIME = 'the '
+    PRIME = 'swiggityspeare '
 
     def __init__(self, vocab_size, is_sampled=False):
-        cell_fn = rnn_cell.BasicLSTMCell
-        cell = cell_fn(self.LAYER_WIDTH, state_is_tuple=True)
-        self.cell = cell = rnn_cell.MultiRNNCell([cell] * self.NUM_LAYERS, state_is_tuple=True)
+        self.cell = rnn_cell.MultiRNNCell([rnn_cell.BasicLSTMCell(self.LAYER_WIDTH, state_is_tuple=True)] * self.NUM_LAYERS, state_is_tuple=True)
         self.vocab_size = vocab_size
 
-        # these can theoretically be changed to int8
+        if is_sampled:
+            self.BATCH_SIZE = 1
+            self.SEQUENCE_LENGTH = 1
+
+        # these can theoretically be changed to int8 for character tokenization
+        # the actual representation should be ceil(log_2(vocab_size))
+        # preps the tensors for data to be added.
         self.input_data = tf.placeholder(tf.int32, [self.BATCH_SIZE, self.SEQUENCE_LENGTH])
         self.targets = tf.placeholder(tf.int32, [self.BATCH_SIZE, self.SEQUENCE_LENGTH])
-        self.initial_state = cell.zero_state(self.BATCH_SIZE, tf.float32)
+        self.initial_state = self.cell.zero_state(self.BATCH_SIZE, tf.float32)
 
         with tf.variable_scope('rnnlm'):
             softmax_w = tf.get_variable("softmax_w", [self.LAYER_WIDTH, vocab_size])
@@ -36,8 +40,9 @@ class Model:
             prev_symbol = tf.stop_gradient(tf.argmax(prev, 1))
             return tf.nn.embedding_lookup(embedding, prev_symbol)
 
-        outputs, last_state = seq2seq.rnn_decoder(inputs, self.initial_state, cell, loop_function=loop if is_sampled else None, scope='rnnlm')
+        outputs, last_state = seq2seq.rnn_decoder(inputs, self.initial_state, self.cell, loop_function=loop if is_sampled else None, scope='rnnlm')
         output = tf.reshape(tf.concat(1, outputs), [-1, self.LAYER_WIDTH])
+        # inverse sigmoidal logistic function (https://en.wikipedia.org/wiki/Logit)
         self.logits = tf.matmul(output, softmax_w) + softmax_b
         self.probs = tf.nn.softmax(self.logits)
         loss = seq2seq.sequence_loss_by_example([self.logits], [tf.reshape(self.targets, [-1])],
