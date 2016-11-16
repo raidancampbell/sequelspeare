@@ -29,6 +29,9 @@ class Sampler:
             if self.checkpoint and self.checkpoint.model_checkpoint_path:
                 tf.train.Saver(tf.all_variables()).restore(self.sess, self.checkpoint.model_checkpoint_path)
 
+    def __del__(self):
+        self.sess.close()
+
     def sample(self, prime_text=None, num_sample_symbols=None):
         # default to the initialized values, which default to hardcoded values if nothing was ever set
         prime_text = prime_text or self.prime_text
