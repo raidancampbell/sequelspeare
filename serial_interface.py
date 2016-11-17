@@ -1,7 +1,9 @@
+import time
+import io
 import serial
 import sys
 import glob
-from sequelspeare.sample import Sampler
+from sample import Sampler
 
 BAUD_RATE = 9600
 STOP_BITS = serial.STOPBITS_ONE
@@ -18,9 +20,10 @@ class SerialInterface:
         if len(existing_ports) is 0:
             print('ERR! no serial ports found on the computer! Exiting...')
             exit(-1)
+        print('using port: ' + existing_ports[0])
         port_name = existing_ports[0]
         self.ser = serial.Serial(port=port_name, baudrate=9600, bytesize=BYTE_SIZE, parity=serial.PARITY_NONE,
-                                 stopbits=STOP_BITS, write_timeout=1, timeout=2)
+                                 stopbits=STOP_BITS, write_timeout=10, timeout=10)
         self.sampler = Sampler()
 
     @staticmethod
@@ -46,15 +49,23 @@ class SerialInterface:
         return result  # return the list of ports that currently actually exist on the system
 
     def respond_to_input_loop(self):
+        sio = io.TextIOWrapper(io.BufferedRWPair(self.ser, self.ser, 1), newline='\r', line_buffering=True)
         while True:
-            query = self.ser.readline()
+            time.sleep(5)  # pause
+            self.ser.write(bytes([12]))  # clear the screen
+            self.ser.write(b'>')  # provide a prompt
+            query = sio.readline().lower().replace('\r', '\n')
             if not query:
                 pass
             else:
                 print('recieved query: ' + query)
-                response = self.sampler.sample(prime_text=query)
+                response = self.sampler.sample(prime_text=query, num_sample_symbols=(80*25))
+                response = response.replace('\n', '\r').replace('\r\r', '\r').replace('\r', '\r\n')
+                response = response[:140]
                 print('responding with response: ' + response)
-                self.ser.write(response + '\n')
+                response += '\a'
+                self.ser.write(bytes([12]))
+                self.ser.write(response.encode('ascii'))
 
     def __del__(self):
         self.ser.close()
