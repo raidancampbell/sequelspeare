@@ -20,7 +20,9 @@ with open(os.path.join(SAVE_DIR, 'chars_vocab.pkl'), 'wb') as f:
     cPickle.dump((data_loader.chars, data_loader.vocab), f)
 
 # housekeeping on training metadata to draw graphs and statistics
-out_file = open('training_.csv', 'w')
+filename = 'training_' + model.LAYER_WIDTH + 'x' + model.NUM_LAYERS + '_' + \
+           str(LEARNING_RATE) + 'l_'+str(DECAY_RATE) + 'd_' + str(EPOCHS) + 'e.csv'  # well-defined standard for naming the metadata
+out_file = open(filename, 'w')
 csv_writer = csv.writer(out_file)
 csv_writer.writerow(['loss', 'time_taken'])
 losses = []
