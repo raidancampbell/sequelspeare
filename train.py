@@ -7,7 +7,7 @@ from six.moves import cPickle
 import csv
 
 # hyperparameters that shouldn't really be dynamically adjusted
-EPOCHS = 3  # this should be longer for actual training. Like 20+.
+EPOCHS = 3  # this should be longer for actual training. Like 30.
 LEARNING_RATE = 0.002
 DECAY_RATE = 0.95
 SAVE_DIR = 'savedata'
@@ -20,7 +20,7 @@ with open(os.path.join(SAVE_DIR, 'chars_vocab.pkl'), 'wb') as f:
     cPickle.dump((data_loader.chars, data_loader.vocab), f)
 
 # housekeeping on training metadata to draw graphs and statistics
-out_file = open('training_metadata.csv', 'w')
+out_file = open('training_.csv', 'w')
 csv_writer = csv.writer(out_file)
 csv_writer.writerow(['loss', 'time_taken'])
 losses = []
@@ -31,17 +31,17 @@ with tf.Session() as sess:
     tf.initialize_all_variables().run()
     for epoch in range(EPOCHS):
         # tell the model its properly decayed learning rate
-        sess.run(tf.assign(model.lr, LEARNING_RATE * (DECAY_RATE ** epoch)))
+        sess.run(tf.assign(model.learning_rate, LEARNING_RATE * (DECAY_RATE ** epoch)))
         data_loader.reset_batch_pointer()  # begin at batch 0
-        state = sess.run(model.initial_state)
+        state = sess.run(model.initial_state)  # initialize the model
         for b in range(data_loader.num_batches):
             start = time.time()
-            x, y = data_loader.next_batch()
+            x, y = data_loader.next_batch()  # get the next source and target data batches
             feed = {model.input_data: x, model.targets: y}
-            for i, (c, h) in enumerate(model.initial_state):
-                feed[c] = state[i].c
-                feed[h] = state[i].h
-
+            for layer_num, (c, h) in enumerate(model.initial_state):  # fill the feed dict with the data each tensor should apply
+                feed[c] = state[layer_num].c  # tensor c should use tensor value state[layer_num].c
+                feed[h] = state[layer_num].h  # from https://arxiv.org/pdf/1409.2329v5.pdf: c is the input, h is the memory
+            # train the model
             train_loss, state, _ = sess.run([model.cost, model.final_state, model.train_op], feed)
             end = time.time()
             losses.append(train_loss)
