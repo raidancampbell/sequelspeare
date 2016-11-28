@@ -4,34 +4,52 @@ import csv
 import glob
 
 
-def moving_average(a, n=3):
-    ret = np.cumsum(a, dtype=float)
-    ret[n:] = ret[n:] - ret[:-n]
-    return ret[n - 1:] / n
+class Plotter:
+    def __init__(self, should_plot=True):
+        self.analyze(should_plot)
 
-for filenum, file in enumerate(glob.glob("*.csv")):
-    with open(file) as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
-        errors = []
-        for i, row in enumerate(reader):
-            if not i:
-                continue
-            errors.append(float(row[0]))
-        if errors:
-            for i, substr_ in enumerate(file[:-4].split('_')):
-                if not i:
+    @staticmethod
+    def moving_average(a, n=3):
+        ret = np.cumsum(a, dtype=float)
+        ret[n:] = ret[n:] - ret[:-n]
+        return ret[n - 1:] / n
+
+    @staticmethod
+    def analyze(should_plot):
+        filenames = glob.glob("training_metadata/*.csv")
+        total_time = 0.
+        for filenum, filename in enumerate(filenames):
+            with open(filename) as csvfile:
+                reader = csv.reader(csvfile, delimiter=',')
+                errors = []
+                for i, row in enumerate(reader):
+                    if not i:
+                        continue  # first row contains the header string
+                    errors.append(float(row[0]))
+                    total_time += float(row[1])
+                if not should_plot:
                     continue
-                if 'x' in substr_:
-                    width = substr_.split('x')[0]
-                    depth = substr_.split('x')[1]
-                if 'l' in substr_:
-                    learning_rate = substr_[:-1]
-                if 'd' in substr_:
-                    decay_rate = substr_[:-1]
-                if 'e' in substr_:
-                    epochs = substr_[:-1]
-            plt.figure(filenum+1)
-            plt.plot(moving_average(errors, n=500))
-            title = width + ' by ' + depth + ' network. \rlearning rate: ' + learning_rate + ' decay rate: ' + decay_rate + ' epochs: ' + epochs
-            plt.title(title)
-plt.show()
+                if errors:
+                    for i, substr_ in enumerate(filename[:-4].split('_')):
+                        if not i:
+                            continue
+                        if 'x' in substr_:
+                            width = substr_.split('x')[0]
+                            depth = substr_.split('x')[1]
+                        if 'l' in substr_:
+                            learning_rate = substr_[:-1]
+                        if 'd' in substr_:
+                            decay_rate = substr_[:-1]
+                        if 'e' in substr_:
+                            epochs = substr_[:-1]
+                    plt.figure(filenum+1)
+                    plt.plot(Plotter.moving_average(errors, n=500))
+                    title = width + ' by ' + depth + ' network. \rlearning rate: ' + learning_rate + ' decay rate: ' + decay_rate + ' epochs: ' + epochs
+                    plt.title(title)
+        if should_plot:
+            plt.show()
+        print('total training time: ' + str(total_time) + ' seconds')
+
+
+if __name__ == '__main__':
+    Plotter()
