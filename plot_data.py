@@ -15,7 +15,7 @@ class Plotter:
         return ret[n - 1:] / n
 
     @staticmethod
-    def analyze(should_plot):
+    def analyze(should_plot, visibly_plot=False):
         filenames = glob.glob("training_metadata/*.csv")
         total_time = 0.
         for filenum, filename in enumerate(filenames):
@@ -42,11 +42,18 @@ class Plotter:
                             decay_rate = substr_[:-1]
                         if 'e' in substr_:
                             epochs = substr_[:-1]
-                    plt.figure(filenum+1)
-                    plt.plot(Plotter.moving_average(errors, n=500))
-                    title = width + ' by ' + depth + ' network. \rlearning rate: ' + learning_rate + ' decay rate: ' + decay_rate + ' epochs: ' + epochs
+                    if visibly_plot:
+                        plt.figure(filenum+1)
+                    plt.plot(Plotter.moving_average(errors, n=2500))
+                    title = width + ' by ' + depth + ' network. \n''\
+                        learning rate: ' + learning_rate + ' decay rate: ' + decay_rate + ' epochs: ' + epochs
                     plt.title(title)
-        if should_plot:
+                    plt.savefig(filename[:-4] + '.png')
+                    print('[' + str(filenum) + '/' + str(len(filenames)) + '] Finished analyzing file: ' + filename)
+                    # if we're not viewing the interactive figures, clear the figure to free up memory
+                    if not visibly_plot:
+                        plt.clf()
+        if visibly_plot:
             plt.show()
         print('total training time: ' + str(total_time) + ' seconds')
 
