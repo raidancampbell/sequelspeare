@@ -20,7 +20,7 @@ with open(os.path.join(SAVE_DIR, 'chars_vocab.pkl'), 'wb') as f:
     cPickle.dump((data_loader.chars, data_loader.vocab), f)
 
 # housekeeping on training metadata to draw graphs and statistics
-filename = 'training_' + model.LAYER_WIDTH + 'x' + model.NUM_LAYERS + '_' + \
+filename = 'training_' + str(model.LAYER_WIDTH) + 'x' + str(model.NUM_LAYERS) + '_' + \
            str(LEARNING_RATE) + 'l_'+str(DECAY_RATE) + 'd_' + str(EPOCHS) + 'e.csv'  # well-defined standard for naming the metadata
 out_file = open(filename, 'w')
 csv_writer = csv.writer(out_file)
@@ -28,8 +28,12 @@ csv_writer.writerow(['loss', 'time_taken'])
 losses = []
 times = []
 
+# polite GPU memory allocation: don't grab everything you can.
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+config.gpu_options.allocator_type = 'BFC'
 # learning happens here
-with tf.Session() as sess:
+with tf.Session(config=config) as sess:
     tf.initialize_all_variables().run()
     for epoch in range(EPOCHS):
         # tell the model its properly decayed learning rate
