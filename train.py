@@ -21,7 +21,8 @@ with open(os.path.join(SAVE_DIR, 'chars_vocab.pkl'), 'wb') as f:
 
 # housekeeping on training metadata to draw graphs and statistics
 filename = 'training_' + str(model.LAYER_WIDTH) + 'x' + str(model.NUM_LAYERS) + '_' + \
-           str(LEARNING_RATE) + 'l_'+str(DECAY_RATE) + 'd_' + str(EPOCHS) + 'e.csv'  # well-defined standard for naming the metadata
+           str(LEARNING_RATE) + 'l_'+str(DECAY_RATE) + 'd_' + str(EPOCHS) + 'e_' + \
+           str(model.BATCH_SIZE) + 'b_' + str(model.SEQUENCE_LENGTH) + 's.csv'  # well-defined standard for naming the metadata
 out_file = open(filename, 'w')
 csv_writer = csv.writer(out_file)
 csv_writer.writerow(['loss', 'time_taken'])
