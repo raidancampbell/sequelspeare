@@ -14,7 +14,7 @@ SAVE_DIR = 'savedata'
 SAVE_FREQ = 1000
 
 # load the data, and save the symbol tables
-data_loader = TextLoader('.', Model.BATCH_SIZE, Model.SEQUENCE_LENGTH)
+data_loader = TextLoader(SAVE_DIR, Model.BATCH_SIZE, Model.SEQUENCE_LENGTH)
 model = Model(data_loader.vocab_size)
 with open(os.path.join(SAVE_DIR, 'chars_vocab.pkl'), 'wb') as f:
     cPickle.dump((data_loader.chars, data_loader.vocab), f)
