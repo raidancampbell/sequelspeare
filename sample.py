@@ -23,7 +23,13 @@ class Sampler:
         with open(os.path.join(Sampler.SAVE_DIR, 'chars_vocab.pkl'), 'rb') as file:
             self.chars, self.vocab = cPickle.load(file)
             self.model = Model(len(self.chars), is_sampled=True)
-            self.sess = tf.Session()
+
+            # polite GPU memory allocation: don't grab everything you can.
+            config = tf.ConfigProto()
+            config.gpu_options.allow_growth = True
+            config.gpu_options.allocator_type = 'BFC'
+            self.sess = tf.Session(config=config)
+
             tf.initialize_all_variables().run(session=self.sess)
             self.checkpoint = tf.train.get_checkpoint_state(self.save_dir)
             if self.checkpoint and self.checkpoint.model_checkpoint_path:
