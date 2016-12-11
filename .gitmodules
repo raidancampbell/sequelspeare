@@ -1,0 +1,3 @@
+[submodule "savedata/sequelspeare-pretrained-net"]
+	path = savedata/sequelspeare-pretrained-net
+	url = https://github.com/raidancampbell/sequelspeare-pretrained-net
