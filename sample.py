@@ -1,7 +1,7 @@
 import tensorflow as tf
 import os
 from six.moves import cPickle
-from sequelspeare.model import Model
+from model import Model
 
 
 # This object creates a TF session: you will run into issues if you instantiate it while training
@@ -32,6 +32,7 @@ class Sampler:
     def __del__(self):
         self.sess.close()
 
+    # returns the resultant string, isError tuple
     def sample(self, prime_text=None, num_sample_symbols=None):
         # default to the initialized values, which default to hardcoded values if nothing was ever set
         prime_text = prime_text or self.prime_text
@@ -39,9 +40,9 @@ class Sampler:
 
         if not self.sess or not self.checkpoint:
             print('ERROR! Failed to initialize Tensorflow session!')
-            return 'ERROR! Failed to initialize Tensorflow session!'
+            return 'ERROR! Failed to initialize Tensorflow session!', True
         else:
-            return self.model.sample(self.sess, self.chars, self.vocab, num_sample_symbols, prime_text, self.sample_style)
+            return self.model.sample(self.sess, self.chars, self.vocab, num_sample_symbols, prime_text, self.sample_style), False
 
 if __name__ == '__main__':
     x = Sampler()

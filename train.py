@@ -1,8 +1,8 @@
 import tensorflow as tf
 import time
 import os
-from sequelspeare.model import Model
-from sequelspeare.utils import TextLoader
+from model import Model
+from utils import TextLoader
 from six.moves import cPickle
 import csv
 
