@@ -1,0 +1,15 @@
+{
+  "botnick": "sequelpeare_default",
+  "reminders": [],
+  "serveraddress": "irc.case.edu",
+  "botrealname": "brainless bot",
+  "botownernick": "stupidspeare_",
+  "channels": [
+    "#lounge",
+    "#swag"
+  ],
+  "serverport": 6667,
+  "whitelistnicks": [
+    "lulu"
+  ]
+}
