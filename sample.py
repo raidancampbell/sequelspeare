@@ -42,7 +42,11 @@ class Sampler:
             print('ERROR! Failed to initialize Tensorflow session!')
             return 'ERROR! Failed to initialize Tensorflow session!', True
         else:
-            return self.model.sample(self.sess, self.chars, self.vocab, num_sample_symbols, prime_text, self.sample_style), False
+            try:
+                result = self.model.sample(self.sess, self.chars, self.vocab, num_sample_symbols, prime_text, self.sample_style)
+            except KeyError:
+                return 'Invalid Character!', True
+            return result, False
 
 if __name__ == '__main__':
     x = Sampler()
