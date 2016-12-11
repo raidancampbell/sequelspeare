@@ -122,8 +122,8 @@ class StupidSpeare(irc.bot.SingleServerIRCBot):
 
 # parse args from command line invocation
 def parse_args():
-    parser = argparse.ArgumentParser(description="runs a stupider version of the late-great swiggityspeare IRC bot")
-    parser.add_argument('--json_filename', type=str, help="Filename of the json configuration file [stupidspeare.json]",
+    parser = argparse.ArgumentParser(description="runs the sequelspeare IRC bot")
+    parser.add_argument('--json_filename', type=str, help="Filename of the json configuration file [sequelspeare.json]",
                         required=False)
     return parser.parse_args()
 
@@ -132,5 +132,6 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     json_filename_ = args.json_filename or 'sequelspeare.json'
-    bot = StupidSpeare(json_filename=json_filename_)
+    bot = 
+    Speare(json_filename=json_filename_)
     bot.start()
