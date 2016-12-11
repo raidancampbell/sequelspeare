@@ -36,6 +36,7 @@ config.gpu_options.allocator_type = 'BFC'
 # learning happens here
 with tf.Session(config=config) as sess:
     tf.initialize_all_variables().run()
+    saver = tf.train.Saver(tf.all_variables(), max_to_keep=1)
     for epoch in range(EPOCHS):
         # tell the model its properly decayed learning rate
         sess.run(tf.assign(model.learning_rate, LEARNING_RATE * (DECAY_RATE ** epoch)))
@@ -60,7 +61,7 @@ with tf.Session(config=config) as sess:
             # save for the last result
             if (epoch * data_loader.num_batches + b) % SAVE_FREQ == 0 or (epoch == EPOCHS - 1 and b == data_loader.num_batches - 1):
                 checkpoint_path = os.path.join(SAVE_DIR, 'model.ckpt')
-                tf.train.Saver(tf.all_variables()).save(sess, checkpoint_path, global_step=epoch * data_loader.num_batches + b)
+                saver.save(sess, checkpoint_path, global_step=epoch * data_loader.num_batches + b)
                 print("saved to {}".format(checkpoint_path))
                 if csv_writer:
                     for time_, loss_ in zip(times, losses):
