@@ -21,7 +21,7 @@ from sample import Sampler
 from jaraco.stream import buffer
 
 
-class StupidSpeare(irc.bot.SingleServerIRCBot):
+class SequelSpeare(irc.bot.SingleServerIRCBot):
     def __init__(self, json_filename):
         self.json_filename = json_filename
         with open(json_filename, 'r') as infile:
@@ -132,6 +132,5 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     json_filename_ = args.json_filename or 'sequelspeare.json'
-    bot = 
-    Speare(json_filename=json_filename_)
+    bot = SequelSpeare(json_filename=json_filename_)
     bot.start()
