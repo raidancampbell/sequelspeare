@@ -20,12 +20,12 @@ class TextLoader:
         self.x_batches = []
         self.y_batches = []
 
-        input_file = os.path.join(data_dir, "input.log")
+        input_file = os.path.join(data_dir, "shakespeare.txt")
         vocab_file = os.path.join(data_dir, "vocab.pkl")
         tensor_file = os.path.join(data_dir, "data.npy")
 
         print("preprocessing text file...")
-        self.preprocess(input_file, vocab_file, tensor_file, remove_timestamps=True, tokenize_by_word=False)
+        self.preprocess(input_file, vocab_file, tensor_file, remove_timestamps=False, tokenize_by_word=False)
         print("preprocessed text file.")
         self.create_batches()
 
@@ -41,7 +41,7 @@ class TextLoader:
     # preprocesses the data into lookup dicts of char-to-int
     # optionally (on by default) strips the timestamps from the beginning of each line in the dataset
     # optionally (off by default) tokenizes the string by words instead of characters
-    def preprocess(self, input_file, vocab_file, tensor_file, remove_timestamps=True, tokenize_by_word=True):
+    def preprocess(self, input_file, vocab_file, tensor_file, remove_timestamps=True, tokenize_by_word=False):
         with codecs.open(input_file, "r", encoding='utf-8') as f:
             data = TextLoader._remove_timestamps(f.read()) if remove_timestamps else f.read()
             counter = collections.Counter(data.split() if tokenize_by_word else data)
