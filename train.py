@@ -7,7 +7,7 @@ from six.moves import cPickle
 import csv
 
 # hyperparameters that shouldn't really be dynamically adjusted
-EPOCHS = 3  # this should be longer for actual training. Like 30.
+EPOCHS = 30
 LEARNING_RATE = 0.002
 DECAY_RATE = 0.95
 SAVE_DIR = 'savedata'
