@@ -6,7 +6,7 @@ from tensorflow.python.ops import seq2seq
 
 class Model:
     LAYER_WIDTH = 512
-    NUM_LAYERS = 3
+    NUM_LAYERS = 4
     BATCH_SIZE = 50
     SEQUENCE_LENGTH = 50
     GRADIENT_CLIP = 5.0
