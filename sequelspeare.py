@@ -1,10 +1,6 @@
-"""A simple example bot.
-
-The known commands are:
+""" The known commands are:
 
     ping -- Pongs the user
-
-    remind -- reminds the user after a given number of seconds/minutes/hours/days
 
     source -- gives a link to the source code
 
@@ -99,9 +95,11 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
             connection.part(event.target)
         elif cmd_text == "die" or cmd_text == "!die":  # respond to !die
             if event.source.nick == self.json_data['botownernick']:
+                print('received authorized request to die. terminating...')
                 self.die()
                 exit(0)
             else:
+                print('received unauthorized request to die. Ignoring')
                 connection.privmsg(event.target,
                                    event.source.nick + ": you're not " + self.json_data['botownernick'] + '!')
         elif cmd_text == "ping" or cmd_text == "!ping":  # respond to !ping
