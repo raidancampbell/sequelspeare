@@ -1,6 +1,7 @@
 import tensorflow as tf
 import time
 import os
+import statistics
 from model import Model
 from utils import TextLoader
 from six.moves import cPickle
@@ -12,6 +13,12 @@ LEARNING_RATE = 0.002
 DECAY_RATE = 0.95
 SAVE_DIR = 'savedata'
 SAVE_FREQ = 1000
+
+
+def calculate_remaining_time_string(batch_times, remaining_batches):
+    avg = statistics.mean(batch_times)
+    seconds_remaining = avg * remaining_batches
+    return time.strftime('%H:%M:%S', time.gmtime(seconds_remaining))
 
 # load the data, and save the symbol tables
 data_loader = TextLoader(SAVE_DIR, Model.BATCH_SIZE, Model.SEQUENCE_LENGTH)
@@ -54,9 +61,10 @@ with tf.Session(config=config) as sess:
             end = time.time()
             losses.append(train_loss)
             times.append(end - start)
-            print("{}/{} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}".format(epoch * data_loader.num_batches + b,
-                                                                                      EPOCHS * data_loader.num_batches,
-                                                                                      epoch, train_loss, end - start))
+            print("{}/{} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}, time remaining = {}"
+                  .format(epoch * data_loader.num_batches + b,
+                          EPOCHS * data_loader.num_batches,
+                          epoch, train_loss, end - start, calculate_remaining_time_string(times, EPOCHS * data_loader.num_batches)))
 
             # save for the last result
             if (epoch * data_loader.num_batches + b) % SAVE_FREQ == 0 or (epoch == EPOCHS - 1 and b == data_loader.num_batches - 1):
