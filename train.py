@@ -64,7 +64,8 @@ with tf.Session(config=config) as sess:
             print("{}/{} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}, time remaining = {}"
                   .format(epoch * data_loader.num_batches + b,
                           EPOCHS * data_loader.num_batches,
-                          epoch, train_loss, end - start, calculate_remaining_time_string(times, EPOCHS * data_loader.num_batches)))
+                          epoch, train_loss, end - start,
+                          calculate_remaining_time_string(times, EPOCHS * data_loader.num_batches - (epoch * data_loader.num_batches + b))))
 
             # save for the last result
             if (epoch * data_loader.num_batches + b) % SAVE_FREQ == 0 or (epoch == EPOCHS - 1 and b == data_loader.num_batches - 1):
