@@ -109,14 +109,29 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
             connection.privmsg(event.target,
                                event.source.nick + ': ' + "https://github.com/raidancampbell/sequelspeare")
         else:  # query the network with the text
-            response, is_err = self.sampler.sample(prime_text=cmd_text)
-            while not response or len(response.split('\n')) <= 1 or not response.split('\n')[1]:
-                if is_err:
-                    connection.privmsg(event.target, event.source.nick + ': ' + "something went wrong...")
-                    return
-                response, is_err = self.sampler.sample(prime_text=cmd_text)
-            print('responding to query with: ' + response.split('\n')[1])
-            connection.privmsg(event.target, event.source.nick + ': ' + response.split('\n')[1])
+            response = self.query_network(event.source.nick, cmd_text)
+            connection.privmsg(event.target, event.source.nick + ': ' + response)
+
+    def query_network(self, nick, line):
+        network_input = nick + ' ' + line + '\n'  # structure the input to be identical to the training data
+        response, is_err = self.sampler.sample(prime_text=network_input)  # remember, the sampler will prepend your input to the response
+
+        is_formatted_as_expected = (response and  # did we get a response from the network
+                                    len(response.split('\n')) > 1 and  # is there more than one line (i.e. the network said something)
+                                    response.split('\n')[1] and  # does the first line of the network's response have any content
+                                    (response.split('\n')[1]).split(' ')[1:].strip())  # is there more content than just an empty nick
+
+        while not is_formatted_as_expected:
+            if is_err:
+                return 'something went wrong...'
+            response, is_err = self.sampler.sample(prime_text=network_input)
+            is_formatted_as_expected = response and len(response.split('\n')) > 1 and \
+                                       response.split('\n')[1] and (response.split('\n')[1]).split(' ')[1:].strip()
+
+        print('responding to query with: ' + (response.split('\n')[1]).split(' ')[1:].strip())
+        # the first line is the input.  The second line is the first line of the response
+        # the first word of the second line is a nickname.  Strip the nick and write the second line.
+        return (response.split('\n')[1]).split(' ')[1:].strip()
 
 
 # parse args from command line invocation
