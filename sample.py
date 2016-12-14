@@ -15,7 +15,7 @@ class Sampler:
     SAMPLE_EACH_TIMESTEP = 1
     SAMPLE_ON_SPACES = 2
 
-    def __init__(self, save_dir=SAVE_DIR, prime_text=PRIME_TEXT, num_sample_symbols=NUM_SAMPLE_SYMBOLS, sample_style=SAMPLE_EACH_TIMESTEP):
+    def __init__(self, save_dir=SAVE_DIR, prime_text=PRIME_TEXT, num_sample_symbols=NUM_SAMPLE_SYMBOLS, sample_style=SAMPLE_ON_SPACES):
         self.save_dir = save_dir
         self.prime_text = prime_text
         self.num_sample_symbols = num_sample_symbols
