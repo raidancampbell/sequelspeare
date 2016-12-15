@@ -21,6 +21,7 @@ import time  # unix timestamp is `int(time.time())`
 from sample import Sampler
 from jaraco.stream import buffer
 from threading import Timer
+import signal
 
 
 # thanks, http://stackoverflow.com/a/13151299/3006365
@@ -279,3 +280,7 @@ if __name__ == '__main__':
     json_filename_ = args.json_filename or 'sequelspeare.json'
     bot = SequelSpeare(json_filename=json_filename_)
     bot.start()
+    # clever trick to prevent threads from surviving past the parents death
+    # thanks, http://stackoverflow.com/questions/24169893/how-to-prevent-exception-ignored-in-module-threading-from-while-settin
+    while True:
+        signal.pause()
