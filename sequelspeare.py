@@ -129,12 +129,12 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
                 return 'something went wrong...'
             response, is_err = self.sampler.sample(prime_text=network_input)
             is_formatted_as_expected = response and len(response.split('\n')) > 1 and \
-                                       response.split('\n')[1] and (response.split('\n')[1]).split(' ')[1:]
+                                       response.split('\n')[1] and ' '.join((response.split('\n')[1]).split(' ')[1:]).strip()
 
-        print('responding to query with: ' + (response.split('\n')[1]).split(' ')[1:].strip())
+        print('responding to query with: ' + ' '.join((response.split('\n')[1]).split(' ')[1:]).strip())
         # the first line is the input.  The second line is the first line of the response
         # the first word of the second line is a nickname.  Strip the nick and write the second line.
-        return (response.split('\n')[1]).split(' ')[1:].strip()
+        return ' '.join((response.split('\n')[1]).split(' ')[1:]).strip()
 
     def generate_new_nick(self):
         network_input = 'swiggity'
