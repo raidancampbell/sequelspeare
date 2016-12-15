@@ -68,6 +68,7 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
         self.connection.add_global_handler('invite', self.on_invite)
         self.sampler = Sampler()
         self.timer = RepeatedTimer(5, SequelSpeare.check_reminders, self)
+        self.rename_timer = RepeatedTimer(60 * 60 * 24, SequelSpeare.rename_self, self)
 
     # rereads the json reminders, then issues them as needed
     @staticmethod
@@ -83,6 +84,10 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
             reminder_object_non_serializable['connection'] = self.connection
             reminder_object_non_serializable['self'] = self
             SequelSpeare.issue_reminder(**reminder_object_non_serializable)
+
+    @staticmethod
+    def rename_self(self):
+        self.apply_new_nick(self.generate_new_nick())
 
     def save_json(self):
         with open(self.json_filename, 'w') as outfile:
@@ -110,6 +115,7 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
             connection.join(chan)
         time.sleep(1)
         self.timer.start()
+        self.rename_timer.start()
 
     # log private messages to stdout, and try to parse a command from it
     def on_privmsg(self, connection, event):
@@ -149,6 +155,8 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
         elif cmd_text == "die" or cmd_text == "!die":  # respond to !die
             if event.source.nick == self.json_data['botownernick']:
                 print('received authorized request to die. terminating...')
+                self.timer.stop()
+                self.rename_timer.stop()
                 self.die()
                 exit(0)
             else:
@@ -242,7 +250,6 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
         kwargs['self'].json_data['reminders'] = list(
             filter(lambda x: x['remindertime'] != kwargs['remindertime'], kwargs['self'].json_data['reminders']))
         kwargs['self'].save_json()
-
 
     def generate_new_nick(self):
         network_input = 'swiggity'
