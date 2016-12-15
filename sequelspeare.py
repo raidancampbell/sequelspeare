@@ -7,6 +7,8 @@
     leave -- makes the bot part the channel
 
     die -- Let the bot cease to exist.
+
+    rename -- allows the bot to choose its own nick
 """
 
 import irc.bot
@@ -14,8 +16,38 @@ import irc.strings
 import argparse  # parse strings from CLI invocation
 import json
 import re
+import random  # for !remind random
+import time  # unix timestamp is `int(time.time())`
 from sample import Sampler
 from jaraco.stream import buffer
+from threading import Timer
+
+
+# thanks, http://stackoverflow.com/a/13151299/3006365
+class RepeatedTimer(object):
+    def __init__(self, interval, function, *_args, **kwargs):
+        self._timer = None
+        self.function = function
+        self.interval = interval
+        self._args = _args
+        self.kwargs = kwargs
+        self.is_running = False
+        self.start()
+
+    def _run(self):
+        self.is_running = False
+        self.start()
+        self.function(*self._args, **self.kwargs)
+
+    def start(self):
+        if not self.is_running:
+            self._timer = Timer(self.interval, self._run)
+            self._timer.start()
+            self.is_running = True
+
+    def stop(self):
+        self._timer.cancel()
+        self.is_running = False
 
 
 class SequelSpeare(irc.bot.SingleServerIRCBot):
@@ -35,6 +67,27 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
             self.save_json()
         self.connection.add_global_handler('invite', self.on_invite)
         self.sampler = Sampler()
+        self.timer = RepeatedTimer(5, SequelSpeare.check_reminders, self)
+
+    # rereads the json reminders, then issues them as needed
+    @staticmethod
+    def check_reminders(self):
+        json_filename = self.json_filename
+        with open(json_filename, 'r') as infile:  # read the json
+            self.json_data = json.loads(infile.read())
+        for reminder_object in self.json_data['reminders']:  # check the reminders
+            if reminder_object['remindertime'] > time.time():
+                continue
+            # if a reminder has expired
+            reminder_object_non_serializable = reminder_object.copy()
+            reminder_object_non_serializable['connection'] = self.connection
+            reminder_object_non_serializable['self'] = self
+            SequelSpeare.issue_reminder(**reminder_object_non_serializable)
+
+    def save_json(self):
+        with open(self.json_filename, 'w') as outfile:
+            # write the json to the file, pretty-printed with indentations, and alphabetically sorted
+            json.dump(self.json_data, outfile, indent=2, sort_keys=True)
 
     # when the bot is invited to a channel, respond by joining the channel
     def on_invite(self, connection, event):
@@ -44,11 +97,6 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
             self.json_data['channels'].append(channel_to_join)
             self.save_json()
 
-    def save_json(self):
-        with open(self.json_filename, 'w') as outfile:
-            # write the json to the file, pretty-printed with indentations, and alphabetically sorted
-            json.dump(self.json_data, outfile, indent=2, sort_keys=True)
-
     # if the nick is already taken, append an underscore
     @staticmethod
     def on_nicknameinuse(connection, event):
@@ -56,9 +104,12 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
 
     # whenever we're finished connecting to the server, join the channels
     def on_welcome(self, connection, event):
+        print('joined network')
         # connect to all the channels we want to
         for chan in self.channels_:
             connection.join(chan)
+        time.sleep(1)
+        self.timer.start()
 
     # log private messages to stdout, and try to parse a command from it
     def on_privmsg(self, connection, event):
@@ -111,9 +162,52 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
                                event.source.nick + ': ' + "https://github.com/raidancampbell/sequelspeare")
         elif cmd_text == "rename" or cmd_text == "!rename":
             self.apply_new_nick(self.generate_new_nick())
-        else:  # query the network with the text
+        elif cmd_text.startswith("remind") or cmd_text.startswith("!remind"):  # respond to !remind
+            wait_time, reminder_text = self.parse_remind(cmd_text)
+            if reminder_text:
+                connection.privmsg(event.target, event.source.nick + ': ' + "I'll remind you about " + reminder_text)
+                reminder_object = {'channel': event.target, 'remindertext': event.source.nick + ': ' + reminder_text,
+                                   'remindertime': int(time.time()) + wait_time}
+                self.json_data['reminders'].append(reminder_object)
+                self.save_json()  # write the reminder to the file.  The background thread will pick it up and issue
+            else:
+                connection.privmsg(event.target, event.source.nick + ': ' +
+                                   'Usage is "!remind [in] 5 (second[s]/minute[s]/hour[s]/day[s]) reminder text"')
+        elif not cmd_text.startswith("!"):  # query the network with the text
             response = self.query_network(event.source.nick, cmd_text)
             connection.privmsg(event.target, event.source.nick + ': ' + response)
+
+    # send me the entire line, starting with !remind
+    # I will give you a tuple of reminder time (in seconds), and reminder text
+    # if parsing fails, expect the reminder text to be empty
+    @staticmethod
+    def parse_remind(text):
+        wait_time = 0
+        finished_parsing = False
+        reminder_text = ''
+        text = text[1:] if text.startswith('!') else text
+        if text.lower().startswith('remind random'):
+            wait_time = random.randint(1, 1000) * 60
+            reminder_text = text[text.index('remind random') + len('remind random'):]
+        else:
+            for word in text.split(' '):
+                if word.isnumeric() and not wait_time:  # we parse it into a float now, and round it at the end
+                    try:  # grab the time
+                        wait_time = float(word)
+                    except ValueError:
+                        print('ERR: failed to parse: ' + word + ' into a float!')
+                        return 0, ''
+                elif wait_time and not finished_parsing:  # we grabbed the time, but need the units
+                    if word.lower() in ['min', 'mins', 'minute', 'minutes']:
+                        wait_time *= 60
+                    elif word.lower() in ['hr', 'hrs', 'hours', 'hour']:
+                        wait_time *= 60 * 60
+                    elif word.lower() in ['day', 'days']:
+                        wait_time = wait_time * 24 * 60 * 60
+                    finished_parsing = True
+                elif finished_parsing:
+                    reminder_text += word + ' '
+        return int(round(wait_time)), reminder_text.strip()  # round the time back from a float into an int
 
     def query_network(self, nick, line):
         network_input = nick + ' ' + line + '\n'  # structure the input to be identical to the training data
@@ -135,6 +229,20 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
         # the first line is the input.  The second line is the first line of the response
         # the first word of the second line is a nickname.  Strip the nick and write the second line.
         return ' '.join((response.split('\n')[1]).split(' ')[1:]).strip()
+
+    # issue a reminder on the given channel to the given nick with the given text
+    # kwargs should contain: 'connection', 'channel', and 'reminder_text'
+    @staticmethod
+    def issue_reminder(**kwargs):
+        kwargs['connection'].privmsg(kwargs['channel'], kwargs['remindertext'])
+        # after issuing the reminder, remove it from the list of things to remind
+        # there is a theoretical collision if multiple reminders are targeted at the same second,
+        # only one may be issued then all within that second will be deleted.
+        # it is more likely to have a unique remindertime than unique remindertext, so this choice is acceptable
+        kwargs['self'].json_data['reminders'] = list(
+            filter(lambda x: x['remindertime'] != kwargs['remindertime'], kwargs['self'].json_data['reminders']))
+        kwargs['self'].save_json()
+
 
     def generate_new_nick(self):
         network_input = 'swiggity'
