@@ -138,7 +138,7 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
 
     def generate_new_nick(self):
         network_input = 'swiggity'
-        response, is_err = self.sampler.sample(prime_text=network_input)
+        response, is_err = self.sampler.sample(prime_text=network_input, sampling_type=Sampler.SAMPLE_EACH_TIMESTEP)
         if is_err:
             return 'swiggity'
         nick_regex = '[a-zA-Z][a-zA-Z0-9_|-]+'

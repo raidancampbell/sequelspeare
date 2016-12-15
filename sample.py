@@ -15,11 +15,10 @@ class Sampler:
     SAMPLE_EACH_TIMESTEP = 1
     SAMPLE_ON_SPACES = 2
 
-    def __init__(self, save_dir=SAVE_DIR, prime_text=PRIME_TEXT, num_sample_symbols=NUM_SAMPLE_SYMBOLS, sample_style=SAMPLE_ON_SPACES):
+    def __init__(self, save_dir=SAVE_DIR, prime_text=PRIME_TEXT, num_sample_symbols=NUM_SAMPLE_SYMBOLS):
         self.save_dir = save_dir
         self.prime_text = prime_text
         self.num_sample_symbols = num_sample_symbols
-        self.sample_style = sample_style
         with open(os.path.join(Sampler.SAVE_DIR, 'chars_vocab.pkl'), 'rb') as file:
             self.chars, self.vocab = cPickle.load(file)
             self.model = Model(len(self.chars), is_sampled=True)
@@ -39,7 +38,7 @@ class Sampler:
         self.sess.close()
 
     # returns the resultant string, isError tuple
-    def sample(self, prime_text=None, num_sample_symbols=None):
+    def sample(self, prime_text=None, num_sample_symbols=None, sample_style=SAMPLE_ON_SPACES):
         # default to the initialized values, which default to hardcoded values if nothing was ever set
         prime_text = prime_text or self.prime_text
         num_sample_symbols = num_sample_symbols or self.num_sample_symbols
@@ -49,7 +48,7 @@ class Sampler:
             return 'ERROR! Failed to initialize Tensorflow session!', True
         else:
             try:
-                result = self.model.sample(self.sess, self.chars, self.vocab, num_sample_symbols, prime_text, self.sample_style)
+                result = self.model.sample(self.sess, self.chars, self.vocab, num_sample_symbols, prime_text, sample_style)
             except KeyError:
                 return 'Invalid Character!', True
             return result, False
