@@ -146,6 +146,7 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
         return new_nick if len(new_nick) <= 30 else new_nick[:30]
 
     def apply_new_nick(self, new_nick):
+        print('changing nick to: ' + new_nick)
         self.connection.nick(new_nick)
 
 
