@@ -13,6 +13,7 @@ import irc.bot
 import irc.strings
 import argparse  # parse strings from CLI invocation
 import json
+import re
 from sample import Sampler
 from jaraco.stream import buffer
 
@@ -108,6 +109,8 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
         elif cmd_text == "source" or cmd_text == "!source":  # respond to !source
             connection.privmsg(event.target,
                                event.source.nick + ': ' + "https://github.com/raidancampbell/sequelspeare")
+        elif cmd_text == "rename" or cmd_text == "!rename":
+            self.apply_new_nick(self.generate_new_nick())
         else:  # query the network with the text
             response = self.query_network(event.source.nick, cmd_text)
             connection.privmsg(event.target, event.source.nick + ': ' + response)
@@ -119,19 +122,31 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
         is_formatted_as_expected = (response and  # did we get a response from the network
                                     len(response.split('\n')) > 1 and  # is there more than one line (i.e. the network said something)
                                     response.split('\n')[1] and  # does the first line of the network's response have any content
-                                    (response.split('\n')[1]).split(' ')[1:].strip())  # is there more content than just an empty nick
+                                    (response.split('\n')[1]).split(' ')[1:])  # is there more content than just an empty nick
 
         while not is_formatted_as_expected:
             if is_err:
                 return 'something went wrong...'
             response, is_err = self.sampler.sample(prime_text=network_input)
             is_formatted_as_expected = response and len(response.split('\n')) > 1 and \
-                                       response.split('\n')[1] and (response.split('\n')[1]).split(' ')[1:].strip()
+                                       response.split('\n')[1] and (response.split('\n')[1]).split(' ')[1:]
 
         print('responding to query with: ' + (response.split('\n')[1]).split(' ')[1:].strip())
         # the first line is the input.  The second line is the first line of the response
         # the first word of the second line is a nickname.  Strip the nick and write the second line.
         return (response.split('\n')[1]).split(' ')[1:].strip()
+
+    def generate_new_nick(self):
+        network_input = 'swiggity'
+        response, is_err = self.sampler.sample(prime_text=network_input)
+        if is_err:
+            return 'swiggity'
+        nick_regex = '[a-zA-Z][a-zA-Z0-9_|-]+'
+        new_nick = re.match(nick_regex, response).group(0)
+        return new_nick if len(new_nick) <= 30 else new_nick[:30]
+
+    def apply_new_nick(self, new_nick):
+        self.connection.nick(new_nick)
 
 
 # parse args from command line invocation
