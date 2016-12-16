@@ -122,8 +122,9 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
     def on_privmsg(self, connection, event):
         message_text = event.arguments[0]
         print('PRIV: <' + event.source.nick + '> ' + message_text)
-        # TODO: keep this from triggering itself.
-        # self.do_command(event, message_text)
+        if event.source.nick != connection.get_nickname():
+            event.target = event.source.nick  # hack to correctly respond to a privmsg using recycled code
+            self.do_command(event, message_text)
 
     # log public messages to stdout, hiss on various conditions, and try to parse a command
     def on_pubmsg(self, connection, event):
