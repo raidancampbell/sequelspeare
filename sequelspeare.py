@@ -173,15 +173,16 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
         elif cmd_text == "rename" or cmd_text == "!rename":
             self.apply_new_nick(self.generate_new_nick())
         elif cmd_text.startswith("remind") or cmd_text.startswith("!remind"):  # respond to !remind
-            wait_time, reminder_text = self.parse_remind(cmd_text)
-            if reminder_text:
-                connection.privmsg(event.target, event.source.nick + ': ' + "I'll remind you about " + reminder_text)
-                reminder_object = {'channel': event.target, 'remindertext': event.source.nick + ': ' + reminder_text,
-                                   'remindertime': int(time.time()) + wait_time}
-                self.json_data['reminders'].append(reminder_object)
-                self.save_json()  # write the reminder to the file.  The background thread will pick it up and issue
-            else:
-                connection.privmsg(event.target, event.source.nick + ': ' +
+            if event.source.nick not in self.hiss_whitelist:
+                wait_time, reminder_text = self.parse_remind(cmd_text)
+                if reminder_text:
+                    connection.privmsg(event.target, event.source.nick + ': ' + "I'll remind you about " + reminder_text)
+                    reminder_object = {'channel': event.target, 'remindertext': event.source.nick + ': ' + reminder_text,
+                                       'remindertime': int(time.time()) + wait_time}
+                    self.json_data['reminders'].append(reminder_object)
+                    self.save_json()  # write the reminder to the file.  The background thread will pick it up and issue
+                else:
+                    connection.privmsg(event.target, event.source.nick + ': ' +
                                    'Usage is "!remind [in] 5 (second[s]/minute[s]/hour[s]/day[s]) reminder text"')
         elif not cmd_text.startswith("!"):  # query the network with the text
             response = self.query_network(event.source.nick, cmd_text)
