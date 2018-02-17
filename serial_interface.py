@@ -23,7 +23,7 @@ class SerialInterface:
         print('using port: ' + existing_ports[0])
         port_name = existing_ports[0]
         self.ser = serial.Serial(port=port_name, baudrate=9600, bytesize=BYTE_SIZE, parity=serial.PARITY_NONE,
-                                 stopbits=STOP_BITS, write_timeout=10, timeout=10)
+                                 stopbits=STOP_BITS, write_timeout=10, timeout=0)
         self.sampler = Sampler()
 
     @staticmethod
@@ -43,22 +43,35 @@ class SerialInterface:
             try:
                 s = serial.Serial(port)  # open it and close it
                 s.close()
-                result.append(port)  # if nothing went wrong, the port exists on the system
+                if 'Bluetooth' not in str(port):
+                    result.append(port)  # if nothing went wrong, the port exists on the system
+                else:
+                    print('found bluetooth port. skipping.')
+                print('found port: ' + str(port))
             except (OSError, serial.SerialException):  # if something went wrong, the port does not exist
                 pass
         return result  # return the list of ports that currently actually exist on the system
 
     def respond_to_input_loop(self):
-        sio = io.TextIOWrapper(io.BufferedRWPair(self.ser, self.ser, 1), newline='\r', line_buffering=True)
+        sio = io.TextIOWrapper(io.BufferedRWPair(self.ser, self.ser, 1), newline=None, line_buffering=True)
+        # clear screen, home cursor
+        self.ser.write(bytes([27, 91, 50, 74, 27, 91, 72]))
+
+        reprint = True
+        query = ''
         while True:
-            time.sleep(5)  # pause
-            self.ser.write(bytes([12]))  # clear the screen
-            self.ser.write(b'>')  # provide a prompt
-            query = sio.readline().lower().replace('\r', '\n')
-            if not query:
+            if reprint:
+                self.ser.write(bytes([27, 91, 50, 74, 27, 91, 72]))
+                self.ser.write(b'>')  # provide a prompt
+            new_text = sio.readline().lower()
+            self.ser.write(new_text.encode('ascii'))
+            query += new_text
+            reprint = query.endswith('\n')
+            if not query.endswith('\n'):
+                time.sleep(0.05)
                 pass
             else:
-                print('recieved query: ' + query)
+                print('received query: ' + query)
                 response = self.sampler.sample(prime_text=query, num_sample_symbols=(80*25))
                 response = response.replace('\n', '\r').replace('\r\r', '\r').replace('\r', '\r\n')
                 response = response[:140]
@@ -66,6 +79,15 @@ class SerialInterface:
                 response += '\a'
                 self.ser.write(bytes([12]))
                 self.ser.write(response.encode('ascii'))
+                time.sleep(3)
+                # invert screen
+                self.ser.write(bytes([0x9B, 0x3F, 0x35, 0x68]))
+                time.sleep(0.03)
+                # uninvert screen
+                self.ser.write(bytes([0x9B, 0x3F, 0x35, 0x6C]))
+                #                    ESC, ],   2,  j, ESC, ], H
+                self.ser.write(bytes([27, 91, 50, 74, 27, 91, 72]))
+                query = ''
 
     def __del__(self):
         self.ser.close()
