@@ -42,8 +42,8 @@ config.gpu_options.allow_growth = True
 config.gpu_options.allocator_type = 'BFC'
 # learning happens here
 with tf.Session(config=config) as sess:
-    tf.initialize_all_variables().run()
-    saver = tf.train.Saver(tf.all_variables(), max_to_keep=1)
+    tf.global_variables_initializer().run()
+    saver = tf.train.Saver(tf.global_variables(), max_to_keep=1)
     for epoch in range(EPOCHS):
         # tell the model its properly decayed learning rate
         sess.run(tf.assign(model.learning_rate, LEARNING_RATE * (DECAY_RATE ** epoch)))

@@ -29,10 +29,10 @@ class Sampler:
             config.gpu_options.allocator_type = 'BFC'
             self.sess = tf.Session(config=config)
 
-            tf.initialize_all_variables().run(session=self.sess)
             self.checkpoint = tf.train.get_checkpoint_state(self.save_dir)
-            if self.checkpoint and self.checkpoint.model_checkpoint_path:
-                tf.train.Saver(tf.all_variables()).restore(self.sess, self.checkpoint.model_checkpoint_path)
+
+            persistor = tf.train.Saver(tf.global_variables())
+            persistor.restore(self.sess, self.checkpoint.model_checkpoint_path)
 
     def __del__(self):
         self.sess.close()

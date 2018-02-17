@@ -1,19 +1,18 @@
 import tensorflow as tf
 import numpy as np
-from tensorflow.python.ops import rnn_cell
-from tensorflow.python.ops import seq2seq
+from tensorflow.contrib import legacy_seq2seq as seq2seq
 
 
 class Model:
-    LAYER_WIDTH = 512
-    NUM_LAYERS = 4
+    LAYER_WIDTH = 160
+    NUM_LAYERS = 3
     BATCH_SIZE = 50
     SEQUENCE_LENGTH = 50
     GRADIENT_CLIP = 5.0
     PRIME = 'swiggityspeare '
 
     def __init__(self, vocab_size, is_sampled=False):
-        self.cell = rnn_cell.MultiRNNCell([rnn_cell.BasicLSTMCell(self.LAYER_WIDTH, state_is_tuple=True)] * self.NUM_LAYERS, state_is_tuple=True)
+        self.cell = tf.contrib.rnn.MultiRNNCell([tf.nn.rnn_cell.BasicLSTMCell(self.LAYER_WIDTH)] * self.NUM_LAYERS)
         self.vocab_size = vocab_size
 
         if is_sampled:
@@ -25,7 +24,7 @@ class Model:
         # preps the tensors for data to be added.
         self.input_data = tf.placeholder(tf.int32, [self.BATCH_SIZE, self.SEQUENCE_LENGTH])
         self.targets = tf.placeholder(tf.int32, [self.BATCH_SIZE, self.SEQUENCE_LENGTH])
-        self.initial_state = self.cell.zero_state(self.BATCH_SIZE, tf.float32)
+        self.initial_state = Model.create_tuple_placeholders_with_default(self.cell.zero_state(self.BATCH_SIZE, tf.float32), extra_dims=(None,), shape=self.cell.state_size)
 
         # in the recurrent neural network language model namespace
         with tf.variable_scope('rnnlm'):
@@ -35,7 +34,7 @@ class Model:
                 # grab the tensor-space embedding distribution of our data
                 embedding = tf.get_variable("embedding", [vocab_size, self.LAYER_WIDTH])
                 # split the embeddings into sequences along the first dimension
-                inputs_ = tf.split(1, self.SEQUENCE_LENGTH, tf.nn.embedding_lookup(embedding, self.input_data))
+                inputs_ = tf.split(value=tf.nn.embedding_lookup(embedding, self.input_data), num_or_size_splits=self.SEQUENCE_LENGTH, axis=1)
                 # lower the tensor ranking by removing the single-length dimension
                 inputs = [tf.squeeze(input_, [1]) for input_ in inputs_]
                 # `inputs` now contains an array of proper-length input data tensors
@@ -46,10 +45,11 @@ class Model:
             return tf.nn.embedding_lookup(embedding, prev_symbol)
 
         # propagate the network.  If we're sampling instead of training, simulate with the `loop` function.
-        outputs, last_state = seq2seq.rnn_decoder(inputs, self.initial_state, self.cell, loop_function=loop if is_sampled else None, scope='rnnlm')
+        loop_function = loop if is_sampled else None
+        outputs, last_state = seq2seq.rnn_decoder(inputs, self.initial_state, self.cell, loop_function=loop_function, scope='rnnlm')
 
         # concatenate along the first dimension, then shape the result such that it is the same width and depth as the network
-        output = tf.reshape(tf.concat(1, outputs), [-1, self.LAYER_WIDTH])
+        output = tf.reshape(tf.concat(outputs, 1), [-1, self.LAYER_WIDTH])
 
         # generate the logits and then probability tensor for the outputs
         self.logits = tf.matmul(output, softmax_w) + softmax_b
@@ -115,3 +115,33 @@ class Model:
             total_response += predicted_next_token
             token = predicted_next_token
         return total_response
+
+    @staticmethod
+    def create_tuple_placeholders_with_default(inputs, extra_dims, shape):
+        if isinstance(shape, int):
+            result = tf.placeholder_with_default(
+                inputs, list(extra_dims) + [shape])
+        else:
+            subplaceholders = [Model.create_tuple_placeholders_with_default(subinputs, extra_dims, subshape) for subinputs, subshape in zip(inputs, shape)]
+            t = type(shape)
+            if t == tuple:
+                result = t(subplaceholders)
+            else:
+                result = t(*subplaceholders)
+        return result
+
+    @staticmethod
+    def create_tuple_placeholders(dtype, extra_dims, shape):
+        if isinstance(shape, int):
+            result = tf.placeholder(dtype, list(extra_dims) + [shape])
+        else:
+            subplaceholders = [Model.create_tuple_placeholders(dtype, extra_dims, subshape)
+                               for subshape in shape]
+            t = type(shape)
+
+            # Handles both tuple and LSTMStateTuple.
+            if t == tuple:
+                result = t(subplaceholders)
+            else:
+                result = t(*subplaceholders)
+        return result
