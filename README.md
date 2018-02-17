@@ -8,7 +8,7 @@ Sequelspeare is written entirely in Python, and requires minimal dependencies to
 
 - Python3, the code was written in 3.5
 - `irc` package, installed via pip
-- Tensorflow, the code was written in 0.10.0rc0
+- Tensorflow, the code was written to support version 1.6
     - This should install several other dependencies such as `numpy` and `six`
     
 ### Usage
@@ -27,8 +27,6 @@ Alternatively, you can immediately train your own network with the shakespeare d
 Once you have an existing network, edit the `sequelspeare.json` file to specify the IRC parameters: nick, server, port, etc...  Once complete, start the bot with `python3 sequelspeare.py`
 
 ### Other Interfaces
-A VT100 serial terminal interface was created.  Assuming the terminal is connected via serial cable, the following command *should* work:
+A VT220 serial terminal interface was created.  Assuming the terminal is connected via serial cable, the following command should work:
 
      python3 serial_interface.py
-
-Unfortunately, my terminal broke a couple hours into use, so this code is likely not perfect.
