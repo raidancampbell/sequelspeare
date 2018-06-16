@@ -52,12 +52,25 @@ class RepeatedTimer(object):
 
 
 class SequelSpeare(irc.bot.SingleServerIRCBot):
-    def __init__(self, json_filename):
+
+    @staticmethod
+    def init(json_filename):
+        json_filename = json_filename
+        with open(json_filename, 'r') as infile:
+            json_data = json.loads(infile.read())
+
+        server_list = [(json_data['serveraddress'], json_data['serverport'])]
+        nickname = json_data['botnick']
+        realname = json_data['botrealname']
+        return SequelSpeare(json_filename, server_list, nickname, realname)
+
+    def __init__(self, json_filename, server_list, nickname, realname, **connect_params):
+        self.bot = super().__init__(server_list, nickname, realname, **connect_params)
+
         self.json_filename = json_filename
         with open(json_filename, 'r') as infile:
             self.json_data = json.loads(infile.read())
-        irc.bot.SingleServerIRCBot.__init__(self, [(self.json_data['serveraddress'], self.json_data['serverport'])],
-                                            self.json_data['botnick'], self.json_data['botrealname'])
+
         self.connection.buffer_class = buffer.LenientDecodingLineBuffer
         self.channels_ = self.json_data['channels']
         try:
@@ -281,7 +294,7 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     json_filename_ = args.json_filename or 'sequelspeare.json'
-    bot = SequelSpeare(json_filename=json_filename_)
+    bot = SequelSpeare.init(json_filename=json_filename_)
     bot.start()
     # clever trick to prevent threads from surviving past the parents death
     # thanks, http://stackoverflow.com/questions/24169893/how-to-prevent-exception-ignored-in-module-threading-from-while-settin
