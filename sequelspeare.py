@@ -11,24 +11,21 @@
     rename -- allows the bot to choose its own nick
 """
 
-import irc.bot
-import irc.strings
+import pydle
 import argparse  # parse strings from CLI invocation
 import json
 import re
 import random  # for !remind random
 import time  # unix timestamp is `int(time.time())`
 from sample import Sampler
-from jaraco.stream import buffer
 from threading import Timer
-import signal
 
 
 # thanks, http://stackoverflow.com/a/13151299/3006365
 class RepeatedTimer(object):
-    def __init__(self, interval, function, *_args, **kwargs):
+    def __init__(self, interval, _function, *_args, **kwargs):
         self._timer = None
-        self.function = function
+        self.function = _function
         self.interval = interval
         self._args = _args
         self.kwargs = kwargs
@@ -51,7 +48,7 @@ class RepeatedTimer(object):
         self.is_running = False
 
 
-class SequelSpeare(irc.bot.SingleServerIRCBot):
+class SequelSpeare(pydle.Client):
 
     @staticmethod
     def init(json_filename):
@@ -59,19 +56,20 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
         with open(json_filename, 'r') as infile:
             json_data = json.loads(infile.read())
 
-        server_list = [(json_data['serveraddress'], json_data['serverport'])]
+        server_addr = json_data['serveraddress']
+        server_port = json_data['serverport']
         nickname = json_data['botnick']
         realname = json_data['botrealname']
-        return SequelSpeare(json_filename, server_list, nickname, realname)
+        return SequelSpeare(json_filename, server_addr, server_port, nickname, realname)
 
-    def __init__(self, json_filename, server_list, nickname, realname, **connect_params):
-        self.bot = super().__init__(server_list, nickname, realname, **connect_params)
+    def __init__(self, json_filename, server_addr, server_port, nickname, realname):
+        super().__init__(nickname, realname=realname)
+        self.connect(server_addr, int(server_port), tls=False, tls_verify=False)
 
         self.json_filename = json_filename
         with open(json_filename, 'r') as infile:
             self.json_data = json.loads(infile.read())
 
-        self.connection.buffer_class = buffer.LenientDecodingLineBuffer
         self.channels_ = self.json_data['channels']
         try:
             self.hiss_whitelist = self.json_data['whitelistnicks']
@@ -79,10 +77,18 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
             self.hiss_whitelist = []
             self.json_data['whitelistnicks'] = []
             self.save_json()
-        self.connection.add_global_handler('invite', self.on_invite)
         self.sampler = Sampler()
         self.timer = RepeatedTimer(5, SequelSpeare.check_reminders, self)
         self.rename_timer = RepeatedTimer(60 * 60 * 24, SequelSpeare.rename_self, self)
+
+    def on_connect(self):
+        print('joined network')
+        # connect to all the channels we want to
+        for channel in self.channels_:
+            self.join(channel)
+        time.sleep(1)
+        self.timer.start()
+        # self.rename_timer.start()
 
     # rereads the json reminders, then issues them as needed
     @staticmethod
@@ -95,7 +101,6 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
                 continue
             # if a reminder has expired
             reminder_object_non_serializable = reminder_object.copy()
-            reminder_object_non_serializable['connection'] = self.connection
             reminder_object_non_serializable['self'] = self
             SequelSpeare.issue_reminder(**reminder_object_non_serializable)
 
@@ -116,90 +121,62 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
             self.json_data['channels'].append(channel_to_join)
             self.save_json()
 
-    # if the nick is already taken, append an underscore
-    @staticmethod
-    def on_nicknameinuse(connection, event):
-        connection.nick(connection.get_nickname() + "_")
-
-    # whenever we're finished connecting to the server, join the channels
-    def on_welcome(self, connection, event):
-        print('joined network')
-        # connect to all the channels we want to
-        for chan in self.channels_:
-            connection.join(chan)
-        time.sleep(1)
-        self.timer.start()
-        self.rename_timer.start()
-
-    # log private messages to stdout, and try to parse a command from it
-    def on_privmsg(self, connection, event):
-        message_text = event.arguments[0]
-        print('PRIV: <' + event.source.nick + '> ' + message_text)
-        if event.source.nick != connection.get_nickname():
-            event.target = event.source.nick  # hack to correctly respond to a privmsg using recycled code
-            self.do_command(event, message_text)
-
     # log public messages to stdout, hiss on various conditions, and try to parse a command
-    def on_pubmsg(self, connection, event):
-        message_text = event.arguments[0]
-        a = message_text.split(":", 1)
+    def on_message(self, source, target, message):
+        # self.message(target, message)
+
+        a = message.split(":", 1)
         # if someone sent a line saying "mynick: command"
-        if len(a) > 1 and irc.strings.lower(a[0]) == irc.strings.lower(self.connection.get_nickname()):
+        if len(a) > 1 and a[0].lower() == self.nickname:
             # split an trim it to get "command"
-            self.do_command(event, a[1].strip())
-        elif message_text.startswith('!'):
-            self.do_command(event, message_text.strip())
-        if event.source.nick not in self.hiss_whitelist:
-            message_text = message_text.lower()
+            self.do_command(source, target, a[1].strip())
+        elif message.startswith('!'):
+            self.do_command(source, target, message.strip())
+        if target not in self.hiss_whitelist:
+            message = message.lower()
             # hiss at buzzfeed/huffpost, characters greater than 128, and on the word 'moist'
-            if 'buzzfeed.com' in message_text or 'huffingtonpost.com' in message_text:
-                connection.privmsg(event.target, 'hisss fuck off with your huffpost buzzfeed crap')
-            elif not all(ord(c) < 128 for c in event.arguments[0]) or 'moist' in message_text:
-                connection.privmsg(event.target, 'hisss')
-        print('PUB: <' + event.source.nick + '> ' + event.arguments[0])
+            if 'buzzfeed.com' in message or 'huffingtonpost.com' in message:
+                self.message(source, 'hisss fuck off with your huffpost buzzfeed crap')
+            elif not all(ord(c) < 128 for c in message) or 'moist' in message:
+                self.message(source, 'hisss')
+        print('PUB: <' + target + '> ' + message)
 
     # performs the various commands documented at the top of the file
-    def do_command(self, event, cmd_text):
-        connection = self.connection
+    def do_command(self, source, target, cmd_text):
 
         if cmd_text == "leave" or cmd_text == "!leave":  # respond to !leave
-            if event.target in self.json_data['channels']:
-                self.json_data['channels'].remove(event.target)
+            if source in self.json_data['channels']:
+                self.json_data['channels'].remove(source)
                 self.save_json()
-            connection.part(event.target)
+            self.part(source)
         elif cmd_text == "die" or cmd_text == "!die":  # respond to !die
-            if event.source.nick == self.json_data['botownernick']:
+            if target == self.json_data['botownernick']:
                 print('received authorized request to die. terminating...')
                 self.timer.stop()
                 self.rename_timer.stop()
-                self.die()
+                self.disconnect()
                 exit(0)
             else:
                 print('received unauthorized request to die. Ignoring')
-                connection.privmsg(event.target,
-                                   event.source.nick + ": you're not " + self.json_data['botownernick'] + '!')
+                self.message(source, target + ": you're not " + self.json_data['botownernick'] + '!')
         elif cmd_text == "ping" or cmd_text == "!ping":  # respond to !ping
-            connection.privmsg(event.target, event.source.nick + ': ' + "Pong!")
+            self.message(source, target + ': Pong!')
         elif cmd_text == "source" or cmd_text == "!source":  # respond to !source
-            connection.privmsg(event.target,
-                               event.source.nick + ': ' + "https://github.com/raidancampbell/sequelspeare")
-        elif cmd_text == "rename" or cmd_text == "!rename":
-            self.apply_new_nick(self.generate_new_nick())
+            self.message(source, target + ': https://github.com/raidancampbell/sequelspeare')
         elif cmd_text.startswith("remind") or cmd_text.startswith("!remind"):  # respond to !remind
-            if event.source.nick not in self.hiss_whitelist:
+            if target not in self.hiss_whitelist:
                 wait_time, reminder_text = self.parse_remind(cmd_text)
                 if reminder_text:
-                    connection.privmsg(event.target, event.source.nick + ': ' + "I'll remind you about " + reminder_text)
-                    reminder_object = {'channel': event.target, 'remindertext': event.source.nick + ': ' + reminder_text,
+                    self.message(source, target + ": I'll remind you about " + reminder_text)
+                    reminder_object = {'channel': source, 'remindertext': target + ': ' + reminder_text,
                                        'remindertime': int(time.time()) + wait_time}
                     self.json_data['reminders'].append(reminder_object)
                     self.save_json()  # write the reminder to the file.  The background thread will pick it up and issue
                 else:
-                    connection.privmsg(event.target, event.source.nick + ': ' +
-                                   'Usage is "!remind [in] 5 (second[s]/minute[s]/hour[s]/day[s]) reminder text"')
+                    self.message(source, target + ': Usage is "!remind [in] 5 (second[s]/minute[s]/hour[s]/day[s]) reminder text"')
         elif not cmd_text.startswith("!"):  # query the network with the text
-            response = self.query_network(event.source.nick, cmd_text)
-            connection.privmsg(event.target, event.source.nick + ': ' + response)
+            response = self.query_network(target, cmd_text)
+            self.message(source, target + ': ' + response)
 
     # send me the entire line, starting with !remind
     # I will give you a tuple of reminder time (in seconds), and reminder text
@@ -259,7 +236,7 @@ class SequelSpeare(irc.bot.SingleServerIRCBot):
     # kwargs should contain: 'connection', 'channel', and 'reminder_text'
     @staticmethod
     def issue_reminder(**kwargs):
-        kwargs['connection'].privmsg(kwargs['channel'], kwargs['remindertext'])
+        kwargs['self'].message(kwargs['channel'], kwargs['remindertext'])
         # after issuing the reminder, remove it from the list of things to remind
         # there is a theoretical collision if multiple reminders are targeted at the same second,
         # only one may be issued then all within that second will be deleted.
@@ -295,8 +272,4 @@ if __name__ == '__main__':
     args = parse_args()
     json_filename_ = args.json_filename or 'sequelspeare.json'
     bot = SequelSpeare.init(json_filename=json_filename_)
-    bot.start()
-    # clever trick to prevent threads from surviving past the parents death
-    # thanks, http://stackoverflow.com/questions/24169893/how-to-prevent-exception-ignored-in-module-threading-from-while-settin
-    while True:
-        signal.pause()
+    bot.handle_forever()
