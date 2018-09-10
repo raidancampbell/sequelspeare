@@ -8,6 +8,7 @@ from Features.Hissable import Hissable
 from Features.Intelligence import Intelligence
 from Features.Loggable import Loggable
 from Features.Pingable import Pingable
+from Features.Pluggable import Pluggable
 from Features.Remindable import Remindable
 from Features.Renameable import Renameable
 from Features.Sourceable import Sourceable
@@ -37,7 +38,7 @@ class SequelSpeare(pydle.Client):
         self.channels_ = self.json_data['channels']
         self.hiss_whitelist = self.json_data['whitelistnicks']
         brain = Intelligence()
-        self.plugins = [Loggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist)]
+        self.plugins = [Loggable(), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist)]
 
     def on_connect(self):
         print('joined network')
@@ -70,9 +71,10 @@ class SequelSpeare(pydle.Client):
 
     def run_plugins(self, source, target, message, highlighted):
         for plugin in self.plugins:
-            stop_chain = plugin.message_filter(bot=self, source=source, target=target, message=message, highlighted=highlighted)
-            if stop_chain:
-                break
+            if plugin.enabled:
+                stop_chain = plugin.message_filter(bot=self, source=source, target=target, message=message, highlighted=highlighted)
+                if stop_chain:
+                    break
 
 
 # parse args from command line invocation
