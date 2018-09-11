@@ -32,7 +32,7 @@ class Pluggable(AbstractFeature):
                     plugin.enabled = True
                 if request_type == 'toggle':
                     plugin.enabled = not plugin.enabled
-                    bot.message(source, "{} enabled, now: {}".format(plugin_name, str(plugin.enabled).upper()))
+                bot.message(source, "{} enabled, now: {}".format(plugin_name, str(plugin.enabled).upper()))
                 break
         else:
             bot.message(source, 'no plugin named "{}" was found!'.format(request))
