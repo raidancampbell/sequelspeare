@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from Features.AbstractFeature import AbstractFeature
 
 
@@ -42,18 +44,18 @@ class Pluggable(AbstractFeature):
     def plugin_status(bot, source, target, message):
         if not (message.startswith("status") or message.startswith("!status")):
             return False
-        request_type = message.split()[0].lower().strip()
-        if request_type.startswith('!'):
-            request_type = request_type[1:]
 
         if len(message.split()) < 2:
             request = ''
         else:
             request = message.split()[1].lower().strip()
 
-        if request_type == 'status':
-            for plugin in bot.plugins:
-                plugin_name = type(plugin).__name__.lower()
-                if plugin_name == request or not request:
-                    bot.message(source, "{} enabled: {}".format(plugin_name, str(plugin.enabled).upper()))
+        status_map = OrderedDict()
+        for plugin in bot.plugins:
+            plugin_name = type(plugin).__name__.lower()
+            if plugin_name == request or not request:
+                status_map[plugin_name] = plugin.enabled
+
+        bot.message(source, 'ENABLED: {}'.format(', '.join([key for key, value in status_map.items() if value])))
+        bot.message(source, 'DISABLED: {}'.format(', '.join([key for key, value in status_map.items() if not value])))
         return True
