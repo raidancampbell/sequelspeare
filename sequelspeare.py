@@ -12,6 +12,7 @@ from Features.Pluggable import Pluggable
 from Features.Remindable import Remindable
 from Features.Renameable import Renameable
 from Features.Sourceable import Sourceable
+from Features.URLable import URLable
 
 
 class SequelSpeare(pydle.Client):
@@ -38,7 +39,7 @@ class SequelSpeare(pydle.Client):
         self.channels_ = self.json_data['channels']
         self.hiss_whitelist = self.json_data['whitelistnicks']
         brain = Intelligence()
-        self.plugins = [Loggable(), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist)]
+        self.plugins = [Loggable(), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist), URLable()]
 
     def on_connect(self):
         print('joined network')
