@@ -1,0 +1,14 @@
+six
+serial
+matplotlib
+numpy
+tensorflow
+escpos
+beautifulsoup4
+validators
+pydle
+pyusb
+pillow
+qrcode
+pyserial
+viivakoodi
