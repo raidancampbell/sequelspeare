@@ -9,6 +9,7 @@ from Features.Intelligence import Intelligence
 from Features.Loggable import Loggable
 from Features.Pingable import Pingable
 from Features.Pluggable import Pluggable
+from Features.Printable import Printable
 from Features.Remindable import Remindable
 from Features.Renameable import Renameable
 from Features.Sourceable import Sourceable
@@ -39,7 +40,7 @@ class SequelSpeare(pydle.Client):
         self.channels_ = self.json_data['channels']
         self.hiss_whitelist = self.json_data['whitelistnicks']
         brain = Intelligence()
-        self.plugins = [Loggable(), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist), URLable()]
+        self.plugins = [Loggable(), Printable(), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist), URLable()]
 
     def on_connect(self):
         print('joined network')
@@ -60,7 +61,7 @@ class SequelSpeare(pydle.Client):
             self.json_data['channels'].append(dest_channel)
             self.save_json()
 
-    # log public messages to stdout, hiss on various conditions, and try to parse a command
+    # when a message is received, figure out if the bot itself was pinged, and execute the plugin chain appropriately
     def on_message(self, source, target, message):
         cleaned_message = message.split(":", 1)
         # if someone sent a line saying "nick: command"
@@ -70,12 +71,17 @@ class SequelSpeare(pydle.Client):
         else:
             self.run_plugins(source, target, message.strip(), highlighted=False)
 
+    # chain the message through all the plugins. Each plugin has the option to continue or kill the chain
     def run_plugins(self, source, target, message, highlighted):
         for plugin in self.plugins:
             if plugin.enabled:
-                stop_chain = plugin.message_filter(bot=self, source=source, target=target, message=message, highlighted=highlighted)
-                if stop_chain:
-                    break
+                try:
+                    stop_chain = plugin.message_filter(bot=self, source=source, target=target, message=message, highlighted=highlighted)
+                    if stop_chain:
+                        break
+                # exceptions in filters are considered benign. log and continue
+                except Exception as e:
+                    print(e)
 
 
 # parse args from command line invocation
