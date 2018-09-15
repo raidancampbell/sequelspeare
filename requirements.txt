@@ -1,5 +1,5 @@
 six
-serial
+pyserial
 matplotlib
 numpy
 tensorflow
