@@ -12,6 +12,7 @@ from Features.Pluggable import Pluggable
 from Features.Printable import Printable
 from Features.Remindable import Remindable
 from Features.Renameable import Renameable
+from Features.Slappable import Slappable
 from Features.Sourceable import Sourceable
 from Features.URLable import URLable
 
@@ -40,7 +41,7 @@ class SequelSpeare(pydle.Client):
         self.channels_ = self.json_data['channels']
         self.hiss_whitelist = self.json_data['whitelistnicks']
         brain = Intelligence()
-        self.plugins = [Loggable(), Printable(), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist), URLable()]
+        self.plugins = [Loggable(), Printable('/dev/fake'), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist), URLable(), Slappable()]
 
     def on_connect(self):
         print('joined network')
@@ -94,6 +95,11 @@ def parse_args():
 
 # Execution begins here, if called via command line
 if __name__ == '__main__':
+    import logging
+
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
+
     args = parse_args()
     json_filename_ = args.json_filename or 'sequelspeare.json'
     SequelSpeare.init(json_filename=json_filename_).handle_forever()
