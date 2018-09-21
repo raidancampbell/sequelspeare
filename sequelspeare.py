@@ -2,6 +2,7 @@ import pydle
 import argparse  # parse strings from CLI invocation
 import json
 
+from Features.Calculable import Calculable
 from Features.Killable import Killable
 from Features.Partable import Partable
 from Features.Hissable import Hissable
@@ -41,7 +42,7 @@ class SequelSpeare(pydle.Client):
         self.channels_ = self.json_data['channels']
         self.hiss_whitelist = self.json_data['whitelistnicks']
         brain = Intelligence()
-        self.plugins = [Loggable(), Printable('/dev/fake'), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist), URLable(), Slappable()]
+        self.plugins = [Loggable(), Printable('/dev/fake'), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist), URLable(), Slappable(), Calculable()]
 
     def on_connect(self):
         print('joined network')
