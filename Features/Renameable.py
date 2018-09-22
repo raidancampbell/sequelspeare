@@ -1,3 +1,5 @@
+import re
+
 from Features.AbstractFeature import AbstractFeature
 
 
@@ -17,7 +19,7 @@ class Renameable(AbstractFeature):
 
     def generate_new_nick(self):
         network_input = 'swiggity'
-        response, is_err = self.intelligence.sample(prime_text=network_input, sample_style=Sampler.SAMPLE_EACH_TIMESTEP)
+        response, is_err = self.intelligence.sample(prime_text=network_input, sample_style=self.intelligence.SAMPLE_EACH_TIMESTEP)
         if is_err:
             return 'swiggity'
         nick_regex = '[a-zA-Z][a-zA-Z0-9_|-]+'
