@@ -7,6 +7,10 @@ from bs4 import BeautifulSoup
 
 class URLable(AbstractFeature):
 
+    @staticmethod
+    def description():
+        return 'Passively retrieves each URL posted, and provides the HTML Title as a summary of the link'
+
     def __init__(self):
         self.no_ssl = ssl._create_unverified_context()
 

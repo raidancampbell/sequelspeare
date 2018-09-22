@@ -2,6 +2,10 @@ from Features.AbstractFeature import AbstractFeature
 
 
 class Hissable(AbstractFeature):
+    @staticmethod
+    def description():
+        return "Passively hisses at characters outside the lower 128, and other trigger words"
+
     def __init__(self, hiss_whitelist):
         self.hiss_whitelist = hiss_whitelist
 

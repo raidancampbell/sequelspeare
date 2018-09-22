@@ -4,6 +4,10 @@ from escpos import *
 
 
 class Printable(AbstractFeature):
+    @staticmethod
+    def description():
+        return 'Passively prints all messages the bot sees to an epson thermal printer.'
+
     # printer_dev really should be specified, the default value here isn't common enough
     def __init__(self, printer_dev):
         self.printer_dev = printer_dev

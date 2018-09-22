@@ -2,6 +2,10 @@ from Features.AbstractFeature import AbstractFeature
 
 
 class Renameable(AbstractFeature):
+    @staticmethod
+    def description():
+        return 'Queries the neural network for a new name for the bot. Usage: "!rename"'
+
     def __init__(self, intelligence):
         self.intelligence = intelligence
 

@@ -3,7 +3,11 @@ import requests
 
 
 class Calculable(AbstractFeature):
-    api_url = 'http://api.mathjs.org/v1/'
+    @staticmethod
+    def description():
+        return 'performs calculations using api.mathjs.org.  Usage: "!calc 2+2"'
+
+    api_url = 'http://api.mathjs.org/v4/'
 
     def message_filter(self, bot, source, target, message, highlighted):
         if (message.startswith("calc") and highlighted) or message.startswith("!calc"):  # respond to !remind

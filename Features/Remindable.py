@@ -6,6 +6,11 @@ import random
 
 
 class Remindable(AbstractFeature):
+    @staticmethod
+    def description():
+        return 'Stores a message and reminds the user after a given amount of time.  ' \
+               'Usage: "!remind [in] 5 (second[s]/minute[s]/hour[s]/day[s]/random) reminder text"'
+
     def __del__(self):
         self.reminder_timer.stop()
 
