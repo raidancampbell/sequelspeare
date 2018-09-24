@@ -77,15 +77,15 @@ class SequelSpeare(pydle.Client):
 
     # chain the message through all the plugins. Each plugin has the option to continue or kill the chain
     def run_plugins(self, source, target, message, highlighted):
-        for plugin in self.plugins:
-            if plugin.enabled:
-                try:
-                    stop_chain = plugin.message_filter(bot=self, source=source, target=target, message=message, highlighted=highlighted)
-                    if stop_chain:
-                        break
-                # exceptions in filters are considered benign. log and continue
-                except Exception as e:
-                    print(e)
+        enabled_plugins = (plugin for plugin in self.plugins if plugin.enabled)
+        for plugin in enabled_plugins:
+            try:
+                stop_chain = plugin.message_filter(bot=self, source=source, target=target, message=message, highlighted=highlighted)
+                if stop_chain:
+                    break
+            # exceptions in filters are considered benign. log and continue
+            except Exception as e:
+                print(e)
 
 
 # parse args from command line invocation
