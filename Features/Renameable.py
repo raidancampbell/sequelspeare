@@ -12,7 +12,7 @@ class Renameable(AbstractFeature):
         self.intelligence = intelligence
 
     def message_filter(self, bot, source, target, message, highlighted):
-        if message == "rename" or message == "!rename":
+        if (message == "rename" and highlighted) or message == "!rename":
             bot.set_nickname(self.generate_new_nick())
             return True
         return False

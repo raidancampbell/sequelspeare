@@ -10,15 +10,15 @@ class Pluggable(AbstractFeature):
                'Must be authorized to enable/disable. Usage: "![status/help/enable/disable/toggle] <plugin>" '
 
     def message_filter(self, bot, source, target, message, highlighted):
-        return Pluggable.control_plugins(bot, source, target, message) \
-               or Pluggable.plugin_status(bot, source, target, message) \
-               or Pluggable.plugin_describe(bot, source, target, message)
+        return Pluggable.control_plugins(bot, source, target, message, highlighted) \
+               or Pluggable.plugin_status(bot, source, target, message, highlighted) \
+               or Pluggable.plugin_describe(bot, source, target, message, highlighted)
 
     @staticmethod
-    def control_plugins(bot, source, target, message):
-        if not (message.startswith("disable") or message.startswith("!disable")
-                or message.startswith("enable") or message.startswith("!enable")
-                or message.startswith("toggle") or message.startswith("!toggle")):
+    def control_plugins(bot, source, target, message, highlighted):
+        if not ((message.startswith("disable") and highlighted) or message.startswith("!disable")
+                or (message.startswith("enable") and highlighted) or message.startswith("!enable")
+                or (message.startswith("toggle") and highlighted) or message.startswith("!toggle")):
             return False
         request_type = message.split()[0].lower().strip()
         if request_type.startswith('!'):
@@ -48,8 +48,8 @@ class Pluggable(AbstractFeature):
         return True
 
     @staticmethod
-    def plugin_status(bot, source, target, message):
-        if not (message.startswith("status") or message.startswith("!status")):
+    def plugin_status(bot, source, target, message, highlighted):
+        if not ((message.startswith("status") and highlighted) or message.startswith("!status")):
             return False
 
         if len(message.split()) < 2:
@@ -68,9 +68,9 @@ class Pluggable(AbstractFeature):
         return True
 
     @staticmethod
-    def plugin_describe(bot, source, target, message):
-        if not (message.startswith("help") or message.startswith("!help")
-                or message.startswith("describe") or message.startswith("!describe")):
+    def plugin_describe(bot, source, target, message, highlighted):
+        if not ((message.startswith("help") and highlighted) or message.startswith("!help")
+                or (message.startswith("describe") and highlighted) or message.startswith("!describe")):
             return False
 
         if len(message.split()) < 2:
