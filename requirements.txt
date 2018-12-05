@@ -1,3 +1,5 @@
+google-api-python-client
+httplib2
 lxml
 requests
 six

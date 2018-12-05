@@ -18,6 +18,7 @@ from Features.Renameable import Renameable
 from Features.Slappable import Slappable
 from Features.Sourceable import Sourceable
 from Features.URLable import URLable
+from Features.Youtubable import Youtubable
 
 
 class SequelSpeare(pydle.Client):
@@ -38,13 +39,12 @@ class SequelSpeare(pydle.Client):
         self.connect(server_addr, int(server_port), tls=False, tls_verify=False)
 
         self.json_filename = json_filename
-        with open(json_filename, 'r') as infile:
-            self.json_data = json.loads(infile.read())
+        self.load_json()
 
         self.channels_ = self.json_data['channels']
         self.hiss_whitelist = self.json_data['whitelistnicks']
         brain = Intelligence()
-        self.plugins = [Loggable(), Printable('/dev/fake'), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist), URLable(), Slappable(), Calculable(), Wolframable(os.getenv('WOLFRAM_KEY'))]
+        self.plugins = [Loggable(), Printable('/dev/fake'), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist), URLable(), Slappable(), Calculable(), Wolframable(os.getenv('WOLFRAM_KEY')), Youtubable()]
 
     def on_connect(self):
         print('joined network')
@@ -56,6 +56,10 @@ class SequelSpeare(pydle.Client):
         with open(self.json_filename, 'w') as outfile:
             # write the json to the file, pretty-printed with indentations, and alphabetically sorted
             json.dump(self.json_data, outfile, indent=2, sort_keys=True)
+
+    def load_json(self):
+        with open(self.json_filename, 'r') as infile:
+            self.json_data = json.loads(infile.read())
 
     # when the bot is invited to a channel, respond by joining the channel
     def on_invite(self, dest_channel, inviter):

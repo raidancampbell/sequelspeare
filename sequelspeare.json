@@ -11,5 +11,10 @@
   "serverport": 6667,
   "whitelistnicks": [
     "lulu"
-  ]
+  ],
+  "optional":{
+    "youtube":{
+      "playlist":"PLa7g_37jzRL5NG5rTfRcee8eUUap_vKBM"
+    }
+  }
 }

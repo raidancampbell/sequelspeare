@@ -20,12 +20,12 @@ class TextLoader:
         self.x_batches = []
         self.y_batches = []
 
-        input_file = os.path.join(data_dir, "shakespeare.txt")
+        input_file = os.path.join(data_dir, "input.log")
         vocab_file = os.path.join(data_dir, "vocab.pkl")
         tensor_file = os.path.join(data_dir, "data.npy")
 
         print("preprocessing text file...")
-        self.preprocess(input_file, vocab_file, tensor_file, remove_timestamps=False, tokenize_by_word=False)
+        self.preprocess(input_file, vocab_file, tensor_file, remove_timestamps=True, tokenize_by_word=False)
         print("preprocessed text file.")
         self.create_batches()
 
