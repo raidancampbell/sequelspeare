@@ -15,7 +15,7 @@ class Youtubable(AbstractFeature):
     def description():
         return 'silently adds youtube URLs to a historical playlist.  show playlist with: "!youtube"'
 
-    def __init__(self, client_secret_filename='youtube-oauth2.json', oauth_storage_filename='client_secret.json'):
+    def __init__(self, oauth_storage_filename='youtube-oauth2.json', client_secret_filename='client_secret.json'):
         self.playlist_id = None  # bot.json_data['optional']['youtube']['playlist']
         self.oauth_storage_filename = oauth_storage_filename
         self.client_secret_filename = client_secret_filename
@@ -34,7 +34,7 @@ class Youtubable(AbstractFeature):
 
         if (message.startswith("youtube") and highlighted) or message.startswith("!youtube"):
             # spit out the URL of the playlist[s]
-            bot.message(source, f'https://www.youtube.com/playlist?list={self.playlist_id}')
+            bot.message(source, 'https://www.youtube.com/playlist?list=' + self.playlist_id)
             return True
         return False
 
