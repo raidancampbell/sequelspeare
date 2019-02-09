@@ -36,12 +36,15 @@ class Pluggable(AbstractFeature):
             plugin_name = type(plugin).__name__.lower()
             if plugin_name == request:
                 if request_type == 'disable':
-                    plugin.enabled = False
+                    plugin.disable()
                 if request_type == 'enable':
-                    plugin.enabled = True
+                    plugin.enable()
                 if request_type == 'toggle':
-                    plugin.enabled = not plugin.enabled
-                bot.message(source, f'{plugin_name} changed, now: {str(plugin.enabled).upper()}')
+                    if plugin.is_enabled():
+                        plugin.disable()
+                    else:
+                        plugin.enable()
+                bot.message(source, f'{plugin_name} changed, now: {str(plugin.is_enabled()).upper()}')
                 break
         else:
             bot.message(source, f'no plugin named "{request}" was found!')
@@ -61,7 +64,7 @@ class Pluggable(AbstractFeature):
         for plugin in bot.plugins:
             plugin_name = type(plugin).__name__.lower()
             if plugin_name == request or not request:
-                status_map[plugin_name] = plugin.enabled
+                status_map[plugin_name] = plugin.is_enabled()
 
         bot.message(source, f'ENABLED: {", ".join([key for key, value in status_map.items() if value])}')
         bot.message(source, f'DISABLED: {", ".join([key for key, value in status_map.items() if not value])}')
