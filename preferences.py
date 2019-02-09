@@ -15,10 +15,10 @@ class Preferences:
         except (FileNotFoundError, JSONDecodeError):
             if file_handle and not file_handle.closed:
                 file_handle.close()
-            file_handle = open(self.file_name, 'a+')
+            with open(self.file_name, 'a+') as _:
+                pass  # just here to create the file.
             self.contents = Preferences._generate_default_values()
             self._dump_and_flush()
-            file_handle.close()
 
     def read_value(self, key):
         return self.read_with_default(key)
@@ -45,9 +45,9 @@ class Preferences:
         self.contents = json.load(file_handle)
 
     def _dump_and_flush(self):
-        file_handle = open(self.file_name, 'r+')
-        json.dump(self.contents, file_handle, indent=2, sort_keys=True)
-        os.fsync(file_handle.fileno())
+        with open(self.file_name, 'r+') as file_handle:
+            json.dump(self.contents, file_handle, indent=2, sort_keys=True)
+            os.fsync(file_handle.fileno())
 
     @staticmethod
     def _generate_default_values():
