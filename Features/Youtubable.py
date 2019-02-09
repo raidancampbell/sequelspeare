@@ -85,4 +85,7 @@ class Youtubable(AbstractFeature):
     def _get_playlist_id(self, bot):
         if self.playlist_id:
             return self.playlist_id
-        return bot.preferences.read_value('youtube')['playlist']
+        options = bot.preferences.read_with_default('youtube', None)
+        if not options:
+            return None
+        return options['playlist']
