@@ -29,8 +29,8 @@ class Pluggable(AbstractFeature):
         else:
             request = message.split()[1].lower().strip()
 
-        if target != bot.json_data['botownernick']:
-            bot.message(source, "{}: you're not {}!".format(target, bot.json_data['botownernick']))
+        if target != bot.preferences.read_value('botownernick'):
+            bot.message(source, "{}: you're not {}!".format(target, bot.preferences.read_value('botownernick')))
             return True
         for plugin in bot.plugins:
             plugin_name = type(plugin).__name__.lower()

@@ -8,9 +8,8 @@ class Partable(AbstractFeature):
 
     def message_filter(self, bot, source, target, message, highlighted):
         if (message == "leave" and highlighted) or message == "!leave":  # respond to !leave
-            if source in bot.json_data['channels']:
-                bot.json_data['channels'].remove(source)
-                bot.save_json()
+            if source in bot.preferences.read_value('channels'):
+                bot.preferences.write_value(bot.preferences.read_value('channels').remove(source))
                 bot.part(source)
             return True
         return False

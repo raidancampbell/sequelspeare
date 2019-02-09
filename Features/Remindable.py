@@ -1,6 +1,5 @@
 from Features.AbstractFeature import AbstractFeature
 from threading import Timer
-import json
 import time
 import random
 
@@ -17,7 +16,6 @@ class Remindable(AbstractFeature):
     def __init__(self, bot):
         self.reminder_timer = RepeatedTimer(5, Remindable.check_reminders, self)
         self.reminder_timer.start()
-        self.json_filename = bot.json_filename
         self.bot = bot
 
     def message_filter(self, bot, source, target, message, highlighted):
@@ -28,19 +26,16 @@ class Remindable(AbstractFeature):
                     bot.message(source, target + ": I'll remind you about " + reminder_text)
                     reminder_object = {'channel': source, 'remindertext': '{}: {}'.format(target, reminder_text),
                                        'remindertime': int(time.time()) + wait_time}
-                    bot.json_data['reminders'].append(reminder_object)
-                    bot.save_json()  # write the reminder to the file.  The background thread will pick it up and issue
+                    bot.preferences.write_value('reminders', bot.preferences.read_value('reminders').append(reminder_object))
                 else:
                     bot.message(source, target + ': Usage is "!remind [in] 5 (second[s]/minute[s]/hour[s]/day[s]) '
                                                  'reminder text"')
             return True
         return False
 
-    # rereads the json reminders, then issues them as needed
-    def check_reminders(self):
-        with open(self.json_filename, 'r') as infile:  # read the json
-            json_data = json.loads(infile.read())
-        for reminder_object in json_data['reminders']:  # check the reminders
+    # rereads the reminders, then issues them as needed
+    def check_reminders(self, bot):
+        for reminder_object in bot.preferences.read_value('reminders'):  # check the reminders
             if reminder_object['remindertime'] > time.time():
                 continue
             # if a reminder has expired
@@ -90,9 +85,8 @@ class Remindable(AbstractFeature):
         # there is a theoretical collision if multiple reminders are targeted at the same second,
         # only one may be issued then all within that second will be deleted.
         # it is more likely to have a unique remindertime than unique remindertext, so this choice is acceptable
-        kwargs['bot'].json_data['reminders'] = list(
-            filter(lambda x: x['remindertime'] != kwargs['remindertime'], kwargs['bot'].json_data['reminders']))
-        kwargs['bot'].save_json()
+        remaining_reminders = list(filter(lambda x: x['remindertime'] != kwargs['remindertime'], kwargs['bot'].preferences.read_value('reminders')))
+        kwargs['bot'].preferences.write_value('reminders', remaining_reminders)
 
 
 # thanks, http://stackoverflow.com/a/13151299/3006365

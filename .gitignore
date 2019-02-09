@@ -87,3 +87,10 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+savedata/
+*.csv
+.idea/
+training_metadata/
+prepreprocess.py
+ignore/

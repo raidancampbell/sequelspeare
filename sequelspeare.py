@@ -1,8 +1,8 @@
 import os
 import pydle
 import argparse  # parse strings from CLI invocation
-import json
 
+from preferences import Preferences
 from Features.Wolframable import Wolframable
 from Features.Calculable import Calculable
 from Features.Killable import Killable
@@ -25,24 +25,20 @@ class SequelSpeare(pydle.Client):
 
     @staticmethod
     def init(json_filename):
-        with open(json_filename, 'r') as infile:
-            json_data = json.loads(infile.read())
+        preferences = Preferences(json_filename)
 
-        server_addr = json_data['serveraddress']
-        server_port = json_data['serverport']
-        nickname = json_data['botnick']
-        realname = json_data['botrealname']
-        return SequelSpeare(json_filename, server_addr, server_port, nickname, realname)
+        server_addr = preferences.read_value('serveraddress')
+        server_port = preferences.read_value('serverport')
+        nickname = preferences.read_value('botnick')
+        realname = preferences.read_value('botrealname')
+        return SequelSpeare(preferences, server_addr, server_port, nickname, realname)
 
-    def __init__(self, json_filename, server_addr, server_port, nickname, realname):
+    def __init__(self, preferences, server_addr, server_port, nickname, realname):
         super().__init__(nickname, realname=realname)
         self.connect(server_addr, int(server_port), tls=False, tls_verify=False)
 
-        self.json_filename = json_filename
-        self.load_json()
-
-        self.channels_ = self.json_data['channels']
-        self.hiss_whitelist = self.json_data['whitelistnicks']
+        self.channels_ = preferences.read_value('channels')
+        self.hiss_whitelist = preferences.read_value('whitelistnicks')
         brain = Intelligence()
         self.plugins = [Loggable(), Printable('/dev/fake'), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist), URLable(), Slappable(), Calculable(), Wolframable(os.getenv('WOLFRAM_KEY')), Youtubable()]
 
@@ -52,22 +48,12 @@ class SequelSpeare(pydle.Client):
         for channel in self.channels_:
             self.join(channel)
 
-    def save_json(self):
-        with open(self.json_filename, 'w') as outfile:
-            # write the json to the file, pretty-printed with indentations, and alphabetically sorted
-            json.dump(self.json_data, outfile, indent=2, sort_keys=True)
-
-    def load_json(self):
-        with open(self.json_filename, 'r') as infile:
-            self.json_data = json.loads(infile.read())
-
     # when the bot is invited to a channel, respond by joining the channel
     def on_invite(self, dest_channel, inviter):
         print('invited to {} by {}'.format(dest_channel, inviter))
         self.join(dest_channel)
-        if dest_channel not in self.json_data['channels']:
-            self.json_data['channels'].append(dest_channel)
-            self.save_json()
+        if dest_channel not in self.preferences.read_value('channels'):
+            self.preferences.write_value('channels', self.preferences.read_value('channels').append(dest_channel))
 
     # when a message is received, figure out if the bot itself was pinged, and execute the plugin chain appropriately
     def on_message(self, source, target, message):
