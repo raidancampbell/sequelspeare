@@ -57,10 +57,10 @@ class SequelSpeare(pydle.Client):
 
     # when a message is received, figure out if the bot itself was pinged, and execute the plugin chain appropriately
     def on_message(self, source, target, message):
-        cleaned_message = message.split(":", 1)
-        # if someone sent a line saying "nick: command"
+        cleaned_message = message.split(':', 1)
+        # if someone sent a line saying 'nick: command'
         if len(cleaned_message) > 1 and cleaned_message[0].lower() == self.nickname:
-            # split an trim it to get "command"
+            # split an trim it to get 'command'
             self.run_plugins(source, target, cleaned_message[1].strip(), highlighted=True)
         else:
             self.run_plugins(source, target, message.strip(), highlighted=False)
@@ -80,8 +80,8 @@ class SequelSpeare(pydle.Client):
 
 # parse args from command line invocation
 def parse_args():
-    parser = argparse.ArgumentParser(description="runs the Sequelspeare IRC bot")
-    parser.add_argument('--json_filename', type=str, help="Filename of the json configuration file [sequelspeare.json]",
+    parser = argparse.ArgumentParser(description='runs the Sequelspeare IRC bot')
+    parser.add_argument('--json_filename', type=str, help='Filename of the json configuration file [sequelspeare.json]',
                         required=False)
     return parser.parse_args()
 

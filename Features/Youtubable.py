@@ -23,16 +23,16 @@ class Youtubable(AbstractFeature):
     def message_filter(self, bot, source, target, message, highlighted):
         self.playlist_id = self._get_playlist_id(bot)
 
-        if "youtu.be/" in message or "youtube.com/watch" in message:
+        if 'youtu.be/' in message or 'youtube.com/watch' in message:
             # grab the URL word
             for word in message.split(' '):
-                if "youtu.be" or "youtube.com/watch" in word:
+                if 'youtu.be' or 'youtube.com/watch' in word:
                     # add URL to playlist
                     video_id = self.extract_video_id(word)
                     if video_id:
                         self._add_video_to_playlist(video_id)
 
-        if (message.startswith("youtube") and highlighted) or message.startswith("!youtube"):
+        if (message.startswith('youtube') and highlighted) or message.startswith('!youtube'):
             # spit out the URL of the playlist[s]
             bot.message(source, 'https://www.youtube.com/playlist?list=' + self.playlist_id)
             return True
@@ -71,7 +71,7 @@ class Youtubable(AbstractFeature):
         playlist_id = playlist_id or self.playlist_id
         service = self._get_authenticated_service()
         service.playlistItems().insert(
-            part="snippet",
+            part='snippet',
             body={
                 'snippet': {
                     'playlistId': playlist_id,

@@ -19,7 +19,7 @@ class Remindable(AbstractFeature):
         self.bot = bot
 
     def message_filter(self, bot, source, target, message, highlighted):
-        if (message.startswith("remind") and highlighted) or message.startswith("!remind"):  # respond to !remind
+        if (message.startswith('remind') and highlighted) or message.startswith('!remind'):  # respond to !remind
             if target not in bot.hiss_whitelist:
                 wait_time, reminder_text = Remindable.parse_remind(message)
                 if reminder_text:

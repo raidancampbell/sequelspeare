@@ -7,7 +7,7 @@ class Partable(AbstractFeature):
         return 'Causes the bot to part from the current channel. Must be authorized to perform. Usage: "!leave"'
 
     def message_filter(self, bot, source, target, message, highlighted):
-        if (message == "leave" and highlighted) or message == "!leave":  # respond to !leave
+        if (message == 'leave' and highlighted) or message == '!leave':  # respond to !leave
             if source in bot.preferences.read_value('channels'):
                 bot.preferences.write_value(bot.preferences.read_value('channels').remove(source))
                 bot.part(source)

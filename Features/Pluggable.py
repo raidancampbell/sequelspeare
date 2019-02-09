@@ -16,9 +16,9 @@ class Pluggable(AbstractFeature):
 
     @staticmethod
     def control_plugins(bot, source, target, message, highlighted):
-        if not ((message.startswith("disable") and highlighted) or message.startswith("!disable")
-                or (message.startswith("enable") and highlighted) or message.startswith("!enable")
-                or (message.startswith("toggle") and highlighted) or message.startswith("!toggle")):
+        if not ((message.startswith('disable') and highlighted) or message.startswith('!disable')
+                or (message.startswith('enable') and highlighted) or message.startswith('!enable')
+                or (message.startswith('toggle') and highlighted) or message.startswith('!toggle')):
             return False
         request_type = message.split()[0].lower().strip()
         if request_type.startswith('!'):
@@ -41,7 +41,7 @@ class Pluggable(AbstractFeature):
                     plugin.enabled = True
                 if request_type == 'toggle':
                     plugin.enabled = not plugin.enabled
-                bot.message(source, "{} changed, now: {}".format(plugin_name, str(plugin.enabled).upper()))
+                bot.message(source, '{} changed, now: {}'.format(plugin_name, str(plugin.enabled).upper()))
                 break
         else:
             bot.message(source, 'no plugin named "{}" was found!'.format(request))
@@ -49,7 +49,7 @@ class Pluggable(AbstractFeature):
 
     @staticmethod
     def plugin_status(bot, source, target, message, highlighted):
-        if not ((message.startswith("status") and highlighted) or message.startswith("!status")):
+        if not ((message.startswith('status') and highlighted) or message.startswith('!status')):
             return False
 
         if len(message.split()) < 2:
@@ -69,8 +69,8 @@ class Pluggable(AbstractFeature):
 
     @staticmethod
     def plugin_describe(bot, source, target, message, highlighted):
-        if not ((message.startswith("help") and highlighted) or message.startswith("!help")
-                or (message.startswith("describe") and highlighted) or message.startswith("!describe")):
+        if not ((message.startswith('help') and highlighted) or message.startswith('!help')
+                or (message.startswith('describe') and highlighted) or message.startswith('!describe')):
             return False
 
         if len(message.split()) < 2:

@@ -41,13 +41,13 @@ class URLable(AbstractFeature):
             content = response.raw.read(URLable.MAX_RECV + 1, decode_content=True)
             # Sites advertising ISO-8859-1 are often lying
             if response.encoding == 'ISO-8859-1':
-                response.encoding = "utf-8"
+                response.encoding = 'utf-8'
             encoding = response.encoding
 
         if len(content) > URLable.MAX_RECV:
             return
 
-        html = BeautifulSoup(content, "lxml", from_encoding=encoding)
+        html = BeautifulSoup(content, 'lxml', from_encoding=encoding)
 
         if html.title:
-            return " ".join(html.title.text.strip().splitlines())
+            return ' '.join(html.title.text.strip().splitlines())
