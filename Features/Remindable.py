@@ -34,8 +34,8 @@ class Remindable(AbstractFeature):
         return False
 
     # rereads the reminders, then issues them as needed
-    def check_reminders(self, bot):
-        for reminder_object in bot.preferences.read_value('reminders'):  # check the reminders
+    def check_reminders(self):
+        for reminder_object in self.bot.preferences.read_value('reminders'):  # check the reminders
             if reminder_object['remindertime'] > time.time():
                 continue
             # if a reminder has expired
