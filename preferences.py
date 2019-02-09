@@ -1,5 +1,6 @@
 import json
 import os
+from json import JSONDecodeError
 
 
 class Preferences:
@@ -8,9 +9,12 @@ class Preferences:
         self.file_name = filename
         self.file_handle = None
         try:
-            self.file_handle = open(self.file_name, 'rw')
-        except FileNotFoundError:
-            self.file_handle = open(self.file_name, 'rw+')
+            self.file_handle = open(self.file_name, 'r+')
+            self._load_contents()
+        except (FileNotFoundError, JSONDecodeError):
+            if self.file_handle and not self.file_handle.closed:
+                self.file_handle.close()
+            self.file_handle = open(self.file_name, 'a+')
             self.contents = Preferences._generate_default_values()
             self._dump_and_flush()
 
@@ -49,3 +53,5 @@ class Preferences:
                             'serverport': '6667', 'whitelistnicks': [], 'optional': []}
         return default_contents
 
+
+prefs_singleton = Preferences('preferences.json')

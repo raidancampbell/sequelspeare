@@ -1,8 +1,7 @@
 import os
 import pydle
-import argparse  # parse strings from CLI invocation
 
-from preferences import Preferences
+from preferences import prefs_singleton
 from Features.Wolframable import Wolframable
 from Features.Calculable import Calculable
 from Features.Killable import Killable
@@ -24,21 +23,19 @@ from Features.Youtubable import Youtubable
 class SequelSpeare(pydle.Client):
 
     @staticmethod
-    def init(json_filename):
-        preferences = Preferences(json_filename)
+    def init():
+        server_addr = prefs_singleton.read_value('serveraddress')
+        server_port = prefs_singleton.read_value('serverport')
+        nickname = prefs_singleton.read_value('botnick')
+        realname = prefs_singleton.read_value('botrealname')
+        return SequelSpeare(server_addr, server_port, nickname, realname)
 
-        server_addr = preferences.read_value('serveraddress')
-        server_port = preferences.read_value('serverport')
-        nickname = preferences.read_value('botnick')
-        realname = preferences.read_value('botrealname')
-        return SequelSpeare(preferences, server_addr, server_port, nickname, realname)
-
-    def __init__(self, preferences, server_addr, server_port, nickname, realname):
+    def __init__(self, server_addr, server_port, nickname, realname):
         super().__init__(nickname, realname=realname)
         self.connect(server_addr, int(server_port), tls=False, tls_verify=False)
-
-        self.channels_ = preferences.read_value('channels')
-        self.hiss_whitelist = preferences.read_value('whitelistnicks')
+        self.preferences = prefs_singleton
+        self.channels_ = self.preferences.read_value('channels')
+        self.hiss_whitelist = self.preferences.read_value('whitelistnicks')
         brain = Intelligence()
         self.plugins = [Loggable(), Printable('/dev/fake'), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist), URLable(), Slappable(), Calculable(), Wolframable(os.getenv('WOLFRAM_KEY')), Youtubable()]
 
@@ -67,7 +64,7 @@ class SequelSpeare(pydle.Client):
 
     # chain the message through all the plugins. Each plugin has the option to continue or kill the chain
     def run_plugins(self, source, target, message, highlighted):
-        enabled_plugins = (plugin for plugin in self.plugins if plugin.enabled)
+        enabled_plugins = (plugin for plugin in self.plugins if plugin.is_enabled())
         for plugin in enabled_plugins:
             try:
                 stop_chain = plugin.message_filter(bot=self, source=source, target=target, message=message, highlighted=highlighted)
@@ -78,21 +75,11 @@ class SequelSpeare(pydle.Client):
                 print(e)
 
 
-# parse args from command line invocation
-def parse_args():
-    parser = argparse.ArgumentParser(description='runs the Sequelspeare IRC bot')
-    parser.add_argument('--json_filename', type=str, help='Filename of the json configuration file [sequelspeare.json]',
-                        required=False)
-    return parser.parse_args()
-
-
 # Execution begins here, if called via command line
 if __name__ == '__main__':
     import logging
 
     logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
+    # logging.getLogger().setLevel(logging.DEBUG)
 
-    args = parse_args()
-    json_filename_ = args.json_filename or 'sequelspeare.json'
-    SequelSpeare.init(json_filename=json_filename_).handle_forever()
+    SequelSpeare.init().handle_forever()
