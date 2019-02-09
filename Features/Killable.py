@@ -16,6 +16,6 @@ class Killable(AbstractFeature):
                 exit(0)
             else:
                 print('received unauthorized request to die. Ignoring')
-                bot.message(source, "{}: you're not {}!".format(target, bot.preferences.read_value('botownernick')))
+                bot.message(source, f"{target}: you're not {bot.preferences.read_value('botownernick')}!")
             return True
         return False

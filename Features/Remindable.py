@@ -24,7 +24,7 @@ class Remindable(AbstractFeature):
                 wait_time, reminder_text = Remindable.parse_remind(message)
                 if reminder_text:
                     bot.message(source, target + ": I'll remind you about " + reminder_text)
-                    reminder_object = {'channel': source, 'remindertext': '{}: {}'.format(target, reminder_text),
+                    reminder_object = {'channel': source, 'remindertext': f'{target}: {reminder_text}',
                                        'remindertime': int(time.time()) + wait_time}
                     bot.preferences.write_value('reminders', bot.preferences.read_value('reminders').append(reminder_object))
                 else:
@@ -62,7 +62,7 @@ class Remindable(AbstractFeature):
                     try:  # grab the time
                         wait_time = float(word)
                     except ValueError:
-                        print('ERR: failed to parse: {} into a float!'.format(word))
+                        print(f'ERR: failed to parse: {word} into a float!')
                         return 0, ''
                 elif wait_time and not finished_parsing:  # we grabbed the time, but need the units
                     if word.lower() in ['min', 'mins', 'minute', 'minutes']:

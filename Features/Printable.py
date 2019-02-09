@@ -28,7 +28,7 @@ class Printable(AbstractFeature):
                 print(e)
                 self.failed_initialization = True
         timestamp = datetime.datetime.now()
-        text = '{} {}: {}\n'.format(timestamp.strftime('%m/%d %H:%M:%S '), target, message)
+        text = f'{timestamp.strftime("%m/%d %H:%M:%S ")} {target}: {message}\n'
         text = text.replace('\\', '\\\\')
         self.epson.text(text)
         return False

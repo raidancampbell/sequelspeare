@@ -36,11 +36,11 @@ class Wolframable(AbstractFeature):
         try:
             request.raise_for_status()
         except requests.HTTPError as e:
-            bot.message(source, 'Error getting query: {}'.format(e.response.status_code))
+            bot.message(source, f'Error getting query: {e.response.status_code}')
             raise
 
         if request.status_code != requests.codes.ok:
-            bot.message(source, 'Wolfram error: {} | {}'.format(request.status_code, url))
+            bot.message(source, f'Wolfram error: {request.status_code} | {url}')
             return True
         result = etree.fromstring(request.content, parser=Wolframable.parser)
 
@@ -54,7 +54,7 @@ class Wolframable(AbstractFeature):
             results = []
             # Format subpods
             for subpod in pod.xpath('subpod'):
-                podinfo = '{} '.format(subpod.attrib['title']) if subpod.attrib['title'] else ''
+                podinfo = f'{subpod.attrib["title"]} ' if subpod.attrib['title'] else ''
 
                 pod_results = []
                 for subinfo in subpod.xpath('plaintext/text()'):
@@ -102,7 +102,7 @@ class Wolframable(AbstractFeature):
 
         # Append input to result
         if 'Input' in pod_texts and 'Result' in pod_texts:
-            pod_texts['Result'] = '{} | {}'.format(pod_texts['Result'], pod_texts['Input'])
+            pod_texts['Result'] = f'{pod_texts["Result"]} | {pod_texts["Input"]}'
             del pod_texts['Input']
 
         # Print result/input first

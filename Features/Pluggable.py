@@ -30,7 +30,7 @@ class Pluggable(AbstractFeature):
             request = message.split()[1].lower().strip()
 
         if target != bot.preferences.read_value('botownernick'):
-            bot.message(source, "{}: you're not {}!".format(target, bot.preferences.read_value('botownernick')))
+            bot.message(source, f"{target}: you're not {bot.preferences.read_value('botownernick')}!")
             return True
         for plugin in bot.plugins:
             plugin_name = type(plugin).__name__.lower()
@@ -41,10 +41,10 @@ class Pluggable(AbstractFeature):
                     plugin.enabled = True
                 if request_type == 'toggle':
                     plugin.enabled = not plugin.enabled
-                bot.message(source, '{} changed, now: {}'.format(plugin_name, str(plugin.enabled).upper()))
+                bot.message(source, f'{plugin_name} changed, now: {str(plugin.enabled).upper()}')
                 break
         else:
-            bot.message(source, 'no plugin named "{}" was found!'.format(request))
+            bot.message(source, f'no plugin named "{request}" was found!')
         return True
 
     @staticmethod
@@ -63,8 +63,8 @@ class Pluggable(AbstractFeature):
             if plugin_name == request or not request:
                 status_map[plugin_name] = plugin.enabled
 
-        bot.message(source, 'ENABLED: {}'.format(', '.join([key for key, value in status_map.items() if value])))
-        bot.message(source, 'DISABLED: {}'.format(', '.join([key for key, value in status_map.items() if not value])))
+        bot.message(source, f'ENABLED: {", ".join([key for key, value in status_map.items() if value])}')
+        bot.message(source, f'DISABLED: {", ".join([key for key, value in status_map.items() if not value])}')
         return True
 
     @staticmethod
@@ -84,7 +84,7 @@ class Pluggable(AbstractFeature):
                 description = plugin.description()
                 break
         else:
-            bot.message(source, 'no plugin named "{}" was found!'.format(request))
+            bot.message(source, f'no plugin named "{request}" was found!')
             return False
         bot.message(source, description)
         return True

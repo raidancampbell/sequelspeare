@@ -50,7 +50,7 @@ class SequelSpeare(pydle.Client):
 
     # when the bot is invited to a channel, respond by joining the channel
     def on_invite(self, dest_channel, inviter):
-        print('invited to {} by {}'.format(dest_channel, inviter))
+        print(f'invited to {dest_channel} by {inviter}')
         self.join(dest_channel)
         if dest_channel not in self.preferences.read_value('channels'):
             self.preferences.write_value('channels', self.preferences.read_value('channels').append(dest_channel))

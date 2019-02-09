@@ -8,6 +8,6 @@ class Pingable(AbstractFeature):
 
     def message_filter(self, bot, source, target, message, highlighted):
         if message == 'ping' or message == '!ping':  # respond to !ping
-            bot.message(source, '{}: Pong!'.format(target))
+            bot.message(source, f'{target}: Pong!')
             return True
         return False
