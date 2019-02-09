@@ -1,17 +1,16 @@
-from abc import ABC
+from preferences import prefs_singleton
 
 
-class AbstractFeature(ABC):
-    enabled = True
+class AbstractFeature:
 
     def disable(self):
-        self.enabled = False
+        prefs_singleton.write_value(type(self).__name__ + '_enabled', False)
 
     def enable(self):
-        self.enabled = True
+        prefs_singleton.write_value(type(self).__name__ + '_enabled', True)
 
     def is_enabled(self):
-        return self.enabled
+        return prefs_singleton.read_with_default(type(self).__name__ + '_enabled', True)
 
     def message_filter(self, bot, source, target, message, highlighted):
         raise NotImplementedError
