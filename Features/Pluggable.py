@@ -10,9 +10,13 @@ class Pluggable(AbstractFeature):
                'Must be authorized to enable/disable. Usage: "![status/help/enable/disable/toggle] <plugin>" '
 
     async def message_filter(self, bot, source, target, message, highlighted):
-        await Pluggable.control_plugins(bot, source, target, message, highlighted) \
-               or await Pluggable.plugin_status(bot, source, target, message, highlighted) \
-               or await Pluggable.plugin_describe(bot, source, target, message, highlighted)
+        if await Pluggable.control_plugins(bot, source, target, message, highlighted):
+            return True
+        if await Pluggable.plugin_status(bot, source, target, message, highlighted):
+            return True
+        if await Pluggable.plugin_describe(bot, source, target, message, highlighted):
+            return True
+        return False
 
     @staticmethod
     async def control_plugins(bot, source, target, message, highlighted):
