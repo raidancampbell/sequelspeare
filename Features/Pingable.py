@@ -6,8 +6,8 @@ class Pingable(AbstractFeature):
     def description():
         return 'Pongs back. Useful for diagnosing a connection Usage: "!ping"'
 
-    def message_filter(self, bot, source, target, message, highlighted):
+    async def message_filter(self, bot, source, target, message, highlighted):
         if message == 'ping' or message == '!ping':  # respond to !ping
-            bot.message(source, f'{target}: Pong!')
+            await bot.message(source, f'{target}: Pong!')
             return True
         return False

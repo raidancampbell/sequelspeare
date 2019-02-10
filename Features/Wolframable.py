@@ -18,11 +18,11 @@ class Wolframable(AbstractFeature):
     def __init__(self):
         self.api_key = self._try_read_key()
 
-    def message_filter(self, bot, source, target, message, highlighted):
+    async def message_filter(self, bot, source, target, message, highlighted):
         if not ((message.startswith('wolfram') and highlighted) or message.startswith('!wolfram')):
             return False
         if not self.api_key:
-            bot.message(source, 'API key not found!')
+            await bot.message(source, 'API key not found!')
             return True
         input_query = message[message.index('wolfram ') + 8:].strip()
         params = {
@@ -36,11 +36,11 @@ class Wolframable(AbstractFeature):
         try:
             request.raise_for_status()
         except requests.HTTPError as e:
-            bot.message(source, f'Error getting query: {e.response.status_code}')
+            await bot.message(source, f'Error getting query: {e.response.status_code}')
             raise
 
         if request.status_code != requests.codes.ok:
-            bot.message(source, f'Wolfram error: {request.status_code} | {url}')
+            await bot.message(source, f'Wolfram error: {request.status_code} | {url}')
             return True
         result = etree.fromstring(request.content, parser=Wolframable.parser)
 
@@ -93,12 +93,12 @@ class Wolframable(AbstractFeature):
 
         # NOTHING??
         if not pod_texts:
-            bot.message(source, 'Nothing found! | ' + url)
+            await bot.message(source, 'Nothing found! | ' + url)
             return True
 
         # Sometimes input will be the only pod from filtering
         if 'Input' in pod_texts and len(pod_texts) == 1:
-            bot.message(source, 'Extra info filtered | ' + url)
+            await bot.message(source, 'Extra info filtered | ' + url)
 
         # Append input to result
         if 'Input' in pod_texts and 'Result' in pod_texts:
@@ -107,15 +107,15 @@ class Wolframable(AbstractFeature):
 
         # Print result/input first
         if 'Input' in pod_texts:
-            bot.message(source, pod_texts['Input'])
+            await bot.message(source, pod_texts['Input'])
             del pod_texts['Input']
         if 'Result' in pod_texts:
-            bot.message(source, pod_texts['Result'])
+            await bot.message(source, pod_texts['Result'])
             del pod_texts['Result']
 
         # Print remaining info
         for key in pod_texts:
-            bot.message(source, pod_texts[key])
+            await bot.message(source, pod_texts[key])
         return True
 
     def _try_read_key(self):

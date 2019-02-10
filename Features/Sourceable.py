@@ -6,8 +6,8 @@ class Sourceable(AbstractFeature):
     def description():
         return 'Provides a link to the source code. Usage: "!source"'
 
-    def message_filter(self, bot, source, target, message, highlighted):
+    async def message_filter(self, bot, source, target, message, highlighted):
         if (message == 'source' and highlighted) or message == '!source':  # respond to !source
-            bot.message(source, f'{target}: https://github.com/raidancampbell/sequelspeare')
+            await bot.message(source, f'{target}: https://github.com/raidancampbell/sequelspeare')
             return True
         return False

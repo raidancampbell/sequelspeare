@@ -9,7 +9,7 @@ class Calculable(AbstractFeature):
 
     api_url = 'http://api.mathjs.org/v4/'
 
-    def message_filter(self, bot, source, target, message, highlighted):
+    async def message_filter(self, bot, source, target, message, highlighted):
         if (message.startswith('calc') and highlighted) or message.startswith('!calc'):
             trimmed_message = message[message.index('calc ') + 4:].strip()
             params = {
@@ -19,6 +19,6 @@ class Calculable(AbstractFeature):
             request = requests.get(Calculable.api_url, params=params, timeout=10.0)
 
             if request.status_code == requests.codes.ok:
-                bot.message(source, request.text)
+                await bot.message(source, request.text)
             return True
         return False

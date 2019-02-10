@@ -6,6 +6,6 @@ class Loggable(AbstractFeature):
     def description():
         return 'Passively logs all messages the bot sees to stdout.'
 
-    def message_filter(self, bot, source, target, message, highlighted):
+    async def message_filter(self, bot, source, target, message, highlighted):
         print(f'{source}: <{target}> {message}')
         return False

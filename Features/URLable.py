@@ -13,12 +13,12 @@ class URLable(AbstractFeature):
     def description():
         return 'Passively retrieves each URL posted, and provides the HTML Title as a summary of the link'
 
-    def message_filter(self, bot, source, target, message, highlighted):
+    async def message_filter(self, bot, source, target, message, highlighted):
         url = self.extract_url(message)
         if url:
             try:
                 title = URLable.get_title(url)
-                bot.message(source, title)
+                await bot.message(source, title)
             except Exception:
                 pass
         return False

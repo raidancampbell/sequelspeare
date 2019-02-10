@@ -11,9 +11,9 @@ class Intelligence(AbstractFeature):
         self.sampler = Sampler()
         self.sample = self.sampler.sample
 
-    def message_filter(self, bot, source, target, message, highlighted):
+    async def message_filter(self, bot, source, target, message, highlighted):
         if highlighted:
-            bot.message(source, target + ': ' + self.query_network(target, message))
+            await bot.message(source, target + ': ' + self.query_network(target, message))
             return True
         return False
 

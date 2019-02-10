@@ -8,6 +8,7 @@ from oauth2client.tools import run_flow, argparser
 from oauth2client.file import Storage
 
 from Features.AbstractFeature import AbstractFeature
+from preferences import prefs_singleton
 
 
 class Youtubable(AbstractFeature):
@@ -20,8 +21,8 @@ class Youtubable(AbstractFeature):
         self.oauth_storage_filename = oauth_storage_filename
         self.client_secret_filename = client_secret_filename
 
-    def message_filter(self, bot, source, target, message, highlighted):
-        self.playlist_id = self._get_playlist_id(bot)
+    async def message_filter(self, bot, source, target, message, highlighted):
+        self.playlist_id = self._get_playlist_id()
 
         if 'youtu.be/' in message or 'youtube.com/watch' in message:
             # grab the URL word
@@ -34,7 +35,7 @@ class Youtubable(AbstractFeature):
 
         if (message.startswith('youtube') and highlighted) or message.startswith('!youtube'):
             # spit out the URL of the playlist[s]
-            bot.message(source, 'https://www.youtube.com/playlist?list=' + self.playlist_id)
+            await bot.message(source, 'https://www.youtube.com/playlist?list=' + self.playlist_id)
             return True
         return False
 
@@ -82,10 +83,10 @@ class Youtubable(AbstractFeature):
                 }
             }).execute()
 
-    def _get_playlist_id(self, bot):
+    def _get_playlist_id(self):
         if self.playlist_id:
             return self.playlist_id
-        options = bot.preferences.read_with_default('youtube', None)
+        options = prefs_singleton.read_with_default('youtube', None)
         if not options:
             return None
         return options['playlist']

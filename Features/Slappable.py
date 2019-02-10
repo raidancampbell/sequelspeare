@@ -6,9 +6,9 @@ class Slappable(AbstractFeature):
     def description():
         return 'Slaps the given user. Usage: "!slap <user>"'
 
-    def message_filter(self, bot, source, target, message, highlighted):
+    async def message_filter(self, bot, source, target, message, highlighted):
         if (message.startswith('slap') and highlighted) or message.startswith('!slap'):
             slap_target = message[message.index('slap ')+4:].strip()
-            bot.ctcp(source, f'ACTION slaps {slap_target} around a bit with a large trout', '')
+            await bot.ctcp(source, f'ACTION slaps {slap_target} around a bit with a large trout', '')
             return True
         return False

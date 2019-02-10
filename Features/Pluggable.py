@@ -1,5 +1,5 @@
 from collections import OrderedDict
-
+from preferences import prefs_singleton
 from Features.AbstractFeature import AbstractFeature
 
 
@@ -9,13 +9,13 @@ class Pluggable(AbstractFeature):
         return 'Provides several plugin features: status, enable, disable, and description. ' \
                'Must be authorized to enable/disable. Usage: "![status/help/enable/disable/toggle] <plugin>" '
 
-    def message_filter(self, bot, source, target, message, highlighted):
-        return Pluggable.control_plugins(bot, source, target, message, highlighted) \
-               or Pluggable.plugin_status(bot, source, target, message, highlighted) \
-               or Pluggable.plugin_describe(bot, source, target, message, highlighted)
+    async def message_filter(self, bot, source, target, message, highlighted):
+        await Pluggable.control_plugins(bot, source, target, message, highlighted) \
+               or await Pluggable.plugin_status(bot, source, target, message, highlighted) \
+               or await Pluggable.plugin_describe(bot, source, target, message, highlighted)
 
     @staticmethod
-    def control_plugins(bot, source, target, message, highlighted):
+    async def control_plugins(bot, source, target, message, highlighted):
         if not ((message.startswith('disable') and highlighted) or message.startswith('!disable')
                 or (message.startswith('enable') and highlighted) or message.startswith('!enable')
                 or (message.startswith('toggle') and highlighted) or message.startswith('!toggle')):
@@ -29,8 +29,8 @@ class Pluggable(AbstractFeature):
         else:
             request = message.split()[1].lower().strip()
 
-        if target != bot.preferences.read_value('botownernick'):
-            bot.message(source, f"{target}: you're not {bot.preferences.read_value('botownernick')}!")
+        if target != prefs_singleton.read_value('botownernick'):
+            await bot.message(source, f"{target}: you're not {prefs_singleton.read_value('botownernick')}!")
             return True
         for plugin in bot.plugins:
             plugin_name = type(plugin).__name__.lower()
@@ -44,14 +44,14 @@ class Pluggable(AbstractFeature):
                         plugin.disable()
                     else:
                         plugin.enable()
-                bot.message(source, f'{plugin_name} changed, now: {str(plugin.is_enabled()).upper()}')
+                await bot.message(source, f'{plugin_name} changed, now: {str(plugin.is_enabled()).upper()}')
                 break
         else:
-            bot.message(source, f'no plugin named "{request}" was found!')
+            await bot.message(source, f'no plugin named "{request}" was found!')
         return True
 
     @staticmethod
-    def plugin_status(bot, source, target, message, highlighted):
+    async def plugin_status(bot, source, target, message, highlighted):
         if not ((message.startswith('status') and highlighted) or message.startswith('!status')):
             return False
 
@@ -71,7 +71,7 @@ class Pluggable(AbstractFeature):
         return True
 
     @staticmethod
-    def plugin_describe(bot, source, target, message, highlighted):
+    async def plugin_describe(bot, source, target, message, highlighted):
         if not ((message.startswith('help') and highlighted) or message.startswith('!help')
                 or (message.startswith('describe') and highlighted) or message.startswith('!describe')):
             return False
@@ -87,7 +87,7 @@ class Pluggable(AbstractFeature):
                 description = plugin.description()
                 break
         else:
-            bot.message(source, f'no plugin named "{request}" was found!')
+            await bot.message(source, f'no plugin named "{request}" was found!')
             return False
-        bot.message(source, description)
+        await bot.message(source, description)
         return True

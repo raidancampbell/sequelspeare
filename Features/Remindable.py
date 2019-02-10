@@ -1,8 +1,8 @@
 from Features.AbstractFeature import AbstractFeature
 from preferences import prefs_singleton
-from threading import Timer
 import time
 import random
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
 class Remindable(AbstractFeature):
@@ -12,39 +12,38 @@ class Remindable(AbstractFeature):
                'Usage: "!remind [in] 5 (second[s]/minute[s]/hour[s]/day[s]/random) reminder text"'
 
     def __del__(self):
-        self.reminder_timer.stop()
+        self.scheduler.shutdown()
 
     def __init__(self, bot):
-        self.reminder_timer = RepeatedTimer(5, Remindable.check_reminders, self)
-        self.reminder_timer.start()
-        self.bot = bot
+        self.scheduler = AsyncIOScheduler()
+        self.scheduler.add_job(Remindable.check_reminders, trigger='interval', seconds=5, max_instances=1, coalesce=True, args=[bot])
+        self.scheduler.start()
         self.hiss_whitelist = prefs_singleton.read_value('whitelistnicks')
 
-    def message_filter(self, bot, source, target, message, highlighted):
+    async def message_filter(self, bot, source, target, message, highlighted):
         if (message.startswith('remind') and highlighted) or message.startswith('!remind'):  # respond to !remind
             if target not in self.hiss_whitelist:
                 wait_time, reminder_text = Remindable.parse_remind(message)
                 if reminder_text:
-                    bot.message(source, target + ": I'll remind you about " + reminder_text)
+                    await bot.message(source, target + ": I'll remind you about " + reminder_text)
                     reminder_object = {'channel': source, 'remindertext': f'{target}: {reminder_text}',
                                        'remindertime': int(time.time()) + wait_time}
-                    bot.preferences.write_value('reminders', bot.preferences.read_value('reminders').append(reminder_object))
+                    existing_reminders = prefs_singleton.read_with_default('reminders', [])
+                    existing_reminders.append(reminder_object)
+                    prefs_singleton.write_value('reminders', existing_reminders)
                 else:
-                    bot.message(source, target + ': Usage is "!remind [in] 5 (second[s]/minute[s]/hour[s]/day[s]) '
+                    await bot.message(source, target + ': Usage is "!remind [in] 5 (second[s]/minute[s]/hour[s]/day[s]) '
                                                  'reminder text"')
             return True
         return False
 
-    # rereads the reminders, then issues them as needed
-    def check_reminders(self):
-        for reminder_object in self.bot.preferences.read_value('reminders'):  # check the reminders
+    @staticmethod
+    async def check_reminders(bot):
+        for reminder_object in prefs_singleton.read_value('reminders'):  # check the reminders
             if reminder_object['remindertime'] > time.time():
                 continue
             # if a reminder has expired
-            reminder_object_non_serializable = reminder_object.copy()
-            reminder_object_non_serializable['self'] = self
-            reminder_object_non_serializable['bot'] = self.bot
-            self.issue_reminder(**reminder_object_non_serializable)
+            await Remindable.issue_reminder(bot, reminder_object['channel'], reminder_object['remindertext'], reminder_object['remindertime'])
 
     # send me the entire line, starting with !remind
     # I will give you a tuple of reminder time (in seconds), and reminder text
@@ -79,40 +78,14 @@ class Remindable(AbstractFeature):
         return int(round(wait_time)), reminder_text.strip()  # round the time back from a float into an int
 
     # issue a reminder on the given channel to the given nick with the given text
-    # kwargs should contain: 'connection', 'channel', and 'reminder_text'
     @staticmethod
-    def issue_reminder(**kwargs):
-        kwargs['bot'].message(kwargs['channel'], kwargs['remindertext'])
+    async def issue_reminder(bot, channel, text, reminder_time):
+        print(f'issuing reminder to {channel} with value {text}')
+        await bot.message(channel, text)
         # after issuing the reminder, remove it from the list of things to remind
         # there is a theoretical collision if multiple reminders are targeted at the same second,
         # only one may be issued then all within that second will be deleted.
         # it is more likely to have a unique remindertime than unique remindertext, so this choice is acceptable
-        remaining_reminders = list(filter(lambda x: x['remindertime'] != kwargs['remindertime'], kwargs['bot'].preferences.read_value('reminders')))
-        kwargs['bot'].preferences.write_value('reminders', remaining_reminders)
+        remaining_reminders = list(filter(lambda x: x['remindertime'] != reminder_time, prefs_singleton.read_value('reminders')))
+        prefs_singleton.write_value('reminders', remaining_reminders or [])
 
-
-# thanks, http://stackoverflow.com/a/13151299/3006365
-class RepeatedTimer(object):
-    def __init__(self, interval, _function, *_args, **kwargs):
-        self._timer = None
-        self.function = _function
-        self.interval = interval
-        self._args = _args
-        self.kwargs = kwargs
-        self.is_running = False
-        self.start()
-
-    def _run(self):
-        self.is_running = False
-        self.start()
-        self.function(*self._args, **self.kwargs)
-
-    def start(self):
-        if not self.is_running:
-            self._timer = Timer(self.interval, self._run)
-            self._timer.start()
-            self.is_running = True
-
-    def stop(self):
-        self._timer.cancel()
-        self.is_running = False

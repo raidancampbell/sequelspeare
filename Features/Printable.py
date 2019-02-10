@@ -17,7 +17,7 @@ class Printable(AbstractFeature):
         self.epson = None
         self.failed_initialization = False
 
-    def message_filter(self, bot, source, target, message, highlighted):
+    async def message_filter(self, bot, source, target, message, highlighted):
         if self.failed_initialization:
             return False
         if not self.epson:

@@ -1,4 +1,5 @@
 from Features.AbstractFeature import AbstractFeature
+from preferences import prefs_singleton
 
 
 class Killable(AbstractFeature):
@@ -6,16 +7,14 @@ class Killable(AbstractFeature):
     def description():
         return 'Disconnects the bot from the IRC server and terminates. Must be authorized to perform. Usage: "!die"'
 
-    def message_filter(self, bot, source, target, message, highlighted):
+    async def message_filter(self, bot, source, target, message, highlighted):
         if message == 'die' or message == '!die':  # respond to !die
-            if target == bot.preferences.read_value('botownernick'):
+            if target == prefs_singleton.read_value('botownernick'):
                 print('received authorized request to die. terminating...')
-                bot.reminder_timer.stop()
-                bot.rename_timer.stop()
-                bot.disconnect()
+                await bot.disconnect()
                 exit(0)
             else:
                 print('received unauthorized request to die. Ignoring')
-                bot.message(source, f"{target}: you're not {bot.preferences.read_value('botownernick')}!")
+                await bot.message(source, f"{target}: you're not {prefs_singleton.read_value('botownernick')}!")
             return True
         return False
