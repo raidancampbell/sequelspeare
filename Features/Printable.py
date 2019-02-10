@@ -5,6 +5,8 @@ from preferences import prefs_singleton
 
 
 class Printable(AbstractFeature):
+    priority = 1
+
     @staticmethod
     def description():
         return 'Passively prints all messages the bot sees to an epson thermal printer.'

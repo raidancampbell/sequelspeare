@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 
 
 class URLable(AbstractFeature):
+    priority = 10
     MAX_RECV = 1000000
 
     @staticmethod

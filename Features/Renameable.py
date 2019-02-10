@@ -4,6 +4,8 @@ from Features.AbstractFeature import AbstractFeature
 
 
 class Renameable(AbstractFeature):
+    priority = 8
+
     @staticmethod
     def description():
         return 'Queries the neural network for a new name for the bot. Usage: "!rename"'

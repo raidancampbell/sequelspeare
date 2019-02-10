@@ -6,6 +6,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 
 class Remindable(AbstractFeature):
+    priority = 7
+
     @staticmethod
     def description():
         return 'Stores a message and reminds the user after a given amount of time.  ' \

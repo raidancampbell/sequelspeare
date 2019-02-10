@@ -3,6 +3,8 @@ import requests
 
 
 class Calculable(AbstractFeature):
+    priority = 12
+
     @staticmethod
     def description():
         return 'performs calculations using api.mathjs.org.  Usage: "!calc 2+2"'

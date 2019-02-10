@@ -9,6 +9,8 @@ from preferences import prefs_singleton
 
 
 class Wolframable(AbstractFeature):
+    priority = 13
+
     # security
     parser = etree.XMLParser(resolve_entities=False, no_network=True)
     api_url = 'https://api.wolframalpha.com/v2/query'

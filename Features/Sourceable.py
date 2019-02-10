@@ -2,6 +2,8 @@ from Features.AbstractFeature import AbstractFeature
 
 
 class Sourceable(AbstractFeature):
+    priority = 6
+
     @staticmethod
     def description():
         return 'Provides a link to the source code. Usage: "!source"'

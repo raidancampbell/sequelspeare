@@ -2,6 +2,8 @@ from Features.AbstractFeature import AbstractFeature
 
 
 class Loggable(AbstractFeature):
+    priority = 0
+
     @staticmethod
     def description():
         return 'Passively logs all messages the bot sees to stdout.'

@@ -12,6 +12,8 @@ from preferences import prefs_singleton
 
 
 class Youtubable(AbstractFeature):
+    priority = 14
+
     @staticmethod
     def description():
         return 'silently adds youtube URLs to a historical playlist.  show playlist with: "!youtube"'

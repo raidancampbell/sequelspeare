@@ -4,6 +4,8 @@ from Features.AbstractFeature import AbstractFeature
 
 
 class Pluggable(AbstractFeature):
+    priority = 2
+
     @staticmethod
     def description():
         return 'Provides several plugin features: status, enable, disable, and description. ' \

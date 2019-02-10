@@ -3,6 +3,8 @@ from sample import Sampler
 
 
 class Intelligence(AbstractFeature):
+    priority = 15
+
     @staticmethod
     def description():
         return 'Queries the neural network for a response to the given input. Usage: "<botnick>: <message>"'

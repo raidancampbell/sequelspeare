@@ -2,6 +2,8 @@ from Features.AbstractFeature import AbstractFeature
 
 
 class Slappable(AbstractFeature):
+    priority = 11
+
     @staticmethod
     def description():
         return 'Slaps the given user. Usage: "!slap <user>"'

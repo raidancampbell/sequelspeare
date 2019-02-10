@@ -3,6 +3,8 @@ from preferences import prefs_singleton
 
 
 class Partable(AbstractFeature):
+    priority = 3
+
     @staticmethod
     def description():
         return 'Causes the bot to part from the current channel. Must be authorized to perform. Usage: "!leave"'

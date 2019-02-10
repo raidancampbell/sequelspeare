@@ -2,6 +2,8 @@ from Features.AbstractFeature import AbstractFeature
 
 
 class Pingable(AbstractFeature):
+    priority = 5
+
     @staticmethod
     def description():
         return 'Pongs back. Useful for diagnosing a connection Usage: "!ping"'

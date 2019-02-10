@@ -3,6 +3,8 @@ from preferences import prefs_singleton
 
 
 class Hissable(AbstractFeature):
+    priority = 9
+
     @staticmethod
     def description():
         return 'Passively hisses at characters outside the lower 128, and other trigger words'

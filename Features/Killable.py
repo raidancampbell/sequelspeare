@@ -3,6 +3,8 @@ from preferences import prefs_singleton
 
 
 class Killable(AbstractFeature):
+    priority = 4
+
     @staticmethod
     def description():
         return 'Disconnects the bot from the IRC server and terminates. Must be authorized to perform. Usage: "!die"'
