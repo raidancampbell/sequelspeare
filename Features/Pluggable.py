@@ -66,8 +66,8 @@ class Pluggable(AbstractFeature):
             if plugin_name == request or not request:
                 status_map[plugin_name] = plugin.is_enabled()
 
-        bot.message(source, f'ENABLED: {", ".join([key for key, value in status_map.items() if value])}')
-        bot.message(source, f'DISABLED: {", ".join([key for key, value in status_map.items() if not value])}')
+        await bot.message(source, f'ENABLED: {", ".join([key for key, value in status_map.items() if value])}')
+        await bot.message(source, f'DISABLED: {", ".join([key for key, value in status_map.items() if not value])}')
         return True
 
     @staticmethod
