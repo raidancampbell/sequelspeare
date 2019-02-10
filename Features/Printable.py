@@ -1,6 +1,7 @@
 from Features.AbstractFeature import AbstractFeature
 import datetime
 from escpos import *
+from preferences import prefs_singleton
 
 
 class Printable(AbstractFeature):
@@ -8,9 +9,9 @@ class Printable(AbstractFeature):
     def description():
         return 'Passively prints all messages the bot sees to an epson thermal printer.'
 
-    # printer_dev really should be specified, the default value here isn't common enough
-    def __init__(self, printer_dev):
-        self.printer_dev = printer_dev
+    def __init__(self):
+        self.printer_dev = self._try_read_device()
+
         # defer initialization until the first message is seen.
         # This prevents try/catch on initialization, even when this feature is disabled
         self.epson = None
@@ -21,7 +22,7 @@ class Printable(AbstractFeature):
             return False
         if not self.epson:
             try:
-                self.epson = self.epson or printer.Serial(self.printer_dev or '/dev/ttyUSB0')
+                self.epson = self.epson or printer.Serial(self.printer_dev)
                 self.epson.set(align='left', font='b', width=1, height=1, density=9)
             except Exception as e:
                 print('failed to initialize printer, silently ignoring')
@@ -32,3 +33,9 @@ class Printable(AbstractFeature):
         text = text.replace('\\', '\\\\')
         self.epson.text(text)
         return False
+
+    def _try_read_device(self):
+        printer_device = prefs_singleton.read_value(type(self).__name__ + '_printer_dev')
+        if not printer_device:
+            prefs_singleton.write_value(type(self).__name__ + '_printer_dev', '')
+        return printer_device

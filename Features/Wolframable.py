@@ -119,9 +119,9 @@ class Wolframable(AbstractFeature):
         return True
 
     def _try_read_key(self):
-        api_key = prefs_singleton.read_value(type(self).__name__ + 'wolfram_api_key')
+        api_key = prefs_singleton.read_value(type(self).__name__ + '_wolfram_api_key')
         if not api_key:
-            prefs_singleton.write_value(type(self).__name__ + 'wolfram_api_key', '')
+            prefs_singleton.write_value(type(self).__name__ + '_wolfram_api_key', '')
         return api_key
 
     @staticmethod

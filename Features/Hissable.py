@@ -1,4 +1,5 @@
 from Features.AbstractFeature import AbstractFeature
+from preferences import prefs_singleton
 
 
 class Hissable(AbstractFeature):
@@ -6,8 +7,8 @@ class Hissable(AbstractFeature):
     def description():
         return 'Passively hisses at characters outside the lower 128, and other trigger words'
 
-    def __init__(self, hiss_whitelist):
-        self.hiss_whitelist = hiss_whitelist
+    def __init__(self):
+        self.hiss_whitelist = prefs_singleton.read_value('whitelistnicks')
 
     def message_filter(self, bot, source, target, message, highlighted):
         if target not in self.hiss_whitelist:

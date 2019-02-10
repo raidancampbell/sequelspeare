@@ -1,4 +1,5 @@
 from Features.AbstractFeature import AbstractFeature
+from preferences import prefs_singleton
 from threading import Timer
 import time
 import random
@@ -17,10 +18,11 @@ class Remindable(AbstractFeature):
         self.reminder_timer = RepeatedTimer(5, Remindable.check_reminders, self)
         self.reminder_timer.start()
         self.bot = bot
+        self.hiss_whitelist = prefs_singleton.read_value('whitelistnicks')
 
     def message_filter(self, bot, source, target, message, highlighted):
         if (message.startswith('remind') and highlighted) or message.startswith('!remind'):  # respond to !remind
-            if target not in bot.hiss_whitelist:
+            if target not in self.hiss_whitelist:
                 wait_time, reminder_text = Remindable.parse_remind(message)
                 if reminder_text:
                     bot.message(source, target + ": I'll remind you about " + reminder_text)
