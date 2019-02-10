@@ -24,10 +24,10 @@ class Printable(AbstractFeature):
             try:
                 self.epson = self.epson or printer.Serial(self.printer_dev)
                 self.epson.set(align='left', font='b', width=1, height=1, density=9)
-            except Exception as e:
-                print('failed to initialize printer, silently ignoring')
-                print(e)
+            except Exception:
+                print('failed to initialize printer, silently ignoring...')
                 self.failed_initialization = True
+                return False
         timestamp = datetime.datetime.now()
         text = f'{timestamp.strftime("%m/%d %H:%M:%S ")} {target}: {message}\n'
         text = text.replace('\\', '\\\\')
