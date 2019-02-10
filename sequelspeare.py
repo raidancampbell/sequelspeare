@@ -22,17 +22,9 @@ from Features.Youtubable import Youtubable
 
 class SequelSpeare(pydle.Client):
 
-    @staticmethod
-    def init():
-        server_addr = prefs_singleton.read_value('serveraddress')
-        server_port = prefs_singleton.read_value('serverport')
-        nickname = prefs_singleton.read_value('botnick')
-        realname = prefs_singleton.read_value('botrealname')
-        return SequelSpeare(server_addr, server_port, nickname, realname)
-
-    def __init__(self, server_addr, server_port, nickname, realname):
-        super().__init__(nickname, realname=realname)
-        self.connect(server_addr, int(server_port), tls=False, tls_verify=False)
+    def __init__(self):
+        super().__init__(prefs_singleton.read_value('botnick'), realname=prefs_singleton.read_value('botrealname'))
+        self.connect(prefs_singleton.read_value('serveraddress'), int(prefs_singleton.read_value('serverport')), tls=False, tls_verify=False)
         self.preferences = prefs_singleton
         self.channels_ = self.preferences.read_value('channels')
         self.hiss_whitelist = self.preferences.read_value('whitelistnicks')
@@ -84,4 +76,4 @@ if __name__ == '__main__':
     logging.basicConfig()
     # logging.getLogger().setLevel(logging.DEBUG)
 
-    SequelSpeare.init().handle_forever()
+    SequelSpeare().handle_forever()
