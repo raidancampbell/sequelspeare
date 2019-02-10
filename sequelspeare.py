@@ -37,7 +37,9 @@ class SequelSpeare(pydle.Client):
         self.channels_ = self.preferences.read_value('channels')
         self.hiss_whitelist = self.preferences.read_value('whitelistnicks')
         brain = Intelligence()
-        self.plugins = [Loggable(), Printable('/dev/fake'), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist), URLable(), Slappable(), Calculable(), Wolframable(os.getenv('WOLFRAM_KEY')), Youtubable()]
+        self.plugins = [Loggable(), Printable('/dev/fake'), Pluggable(), Partable(), Killable(), Pingable(),
+                        Sourceable(), Remindable(self), brain, Renameable(brain), Hissable(self.hiss_whitelist),
+                        URLable(), Slappable(), Calculable(), Wolframable(), Youtubable()]
 
     def on_connect(self):
         print('joined network')

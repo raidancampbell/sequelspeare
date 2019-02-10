@@ -1,4 +1,3 @@
-import os
 import re
 import urllib.parse
 
@@ -6,6 +5,7 @@ import requests
 from lxml import etree
 
 from Features.AbstractFeature import AbstractFeature
+from preferences import prefs_singleton
 
 
 class Wolframable(AbstractFeature):
@@ -15,8 +15,8 @@ class Wolframable(AbstractFeature):
     query_url = 'https://www.wolframalpha.com/input/?i={}'
     show_pods = {'Input': True, 'Result': True, 'UnitConversion': True, 'AdditionalConversion': True}
 
-    def __init__(self, api_key):
-        self.api_key = api_key or os.getenv('WOLFRAM_KEY', '')
+    def __init__(self):
+        self.api_key = self._try_read_key()
 
     def message_filter(self, bot, source, target, message, highlighted):
         if not ((message.startswith('wolfram') and highlighted) or message.startswith('!wolfram')):
@@ -117,6 +117,12 @@ class Wolframable(AbstractFeature):
         for key in pod_texts:
             bot.message(source, pod_texts[key])
         return True
+
+    def _try_read_key(self):
+        api_key = prefs_singleton.read_value(type(self).__name__ + 'wolfram_api_key')
+        if not api_key:
+            prefs_singleton.write_value(type(self).__name__ + 'wolfram_api_key', '')
+        return api_key
 
     @staticmethod
     def description():
