@@ -1,24 +1,14 @@
 import asyncio
+import importlib
+from pkgutil import walk_packages
 
 import pydle
 
+import Features
 from preferences import prefs_singleton
-from Features.Wolframable import Wolframable
-from Features.Calculable import Calculable
-from Features.Killable import Killable
-from Features.Partable import Partable
-from Features.Hissable import Hissable
 from Features.Intelligence import Intelligence
-from Features.Loggable import Loggable
-from Features.Pingable import Pingable
-from Features.Pluggable import Pluggable
-from Features.Printable import Printable
 from Features.Remindable import Remindable
 from Features.Renameable import Renameable
-from Features.Slappable import Slappable
-from Features.Sourceable import Sourceable
-from Features.URLable import URLable
-from Features.Youtubable import Youtubable
 
 
 class SequelSpeare(pydle.Client):
@@ -35,13 +25,23 @@ class SequelSpeare(pydle.Client):
         asyncio.ensure_future(self.connect(server_address, server_port, tls=False, tls_verify=False), loop=loop)
 
         self.preferences = prefs_singleton
-        brain = Intelligence()
-        self.plugins = [Loggable(), Printable(), Pluggable(), Partable(), Killable(), Pingable(), Sourceable(),
-                        Remindable(self),  # Remindable needs access to the bot, so it can send a line at any time
-                        brain,  # brain is just an instance so it can be referenced again
-                        Renameable(brain),  # renameable needs intelligence to rename itself
-                        Hissable(), URLable(), Slappable(), Calculable(), Wolframable(), Youtubable()]
 
+        blacklist = ['AbstractFeature', 'Intelligence', 'Renameable', 'Remindable']
+        self.plugins = self.load_features(blacklist)
+
+        brain = None
+        # brain is just an instance so it can be referenced again
+        if prefs_singleton.read_with_default('Intelligence_enabled', True):
+            brain = Intelligence()
+            self.plugins.append(brain)
+        # renameable needs intelligence to rename itself
+        if prefs_singleton.read_with_default('Renameable_enabled', True):
+            self.plugins.append(Renameable(brain))
+        # Remindable needs access to the bot, so it can send a line at any time
+        if prefs_singleton.read_with_default('Remindable_enabled', True):
+            self.plugins.append(Remindable(self))
+
+        self.plugins.sort(key=lambda f: f.priority)
         loop.run_forever()
 
     async def on_connect(self):
@@ -82,6 +82,24 @@ class SequelSpeare(pydle.Client):
             # exceptions in filters are considered benign. log and continue
             except Exception as e:
                 print(e)
+
+    @staticmethod
+    def _find_features():
+        for _, name, is_pkg in walk_packages(Features.__path__, prefix='Features.'):
+            if not is_pkg:
+                yield name
+
+    @staticmethod
+    def load_features(blacklist):
+        enabled_features = []
+
+        for module_name in SequelSpeare._find_features():
+            class_name = module_name.split('.')[-1]
+            if prefs_singleton.read_with_default(f'{class_name}_enabled', True) and class_name not in blacklist:
+                module = importlib.import_module(module_name)
+                clazz = getattr(module, class_name)
+                enabled_features.append(clazz())
+        return enabled_features
 
 
 # Execution begins here, if called via command line
