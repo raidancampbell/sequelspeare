@@ -12,13 +12,16 @@ class Preferences:
             file_handle = open(self.file_name, 'r+')
             self._load_contents(file_handle)
             file_handle.close()
-        except (FileNotFoundError, JSONDecodeError):
+        except FileNotFoundError:
             if file_handle and not file_handle.closed:
                 file_handle.close()
             with open(self.file_name, 'a+') as _:
                 pass  # just here to create the file.
             self.contents = Preferences._generate_default_values()
             self._dump_and_flush()
+        except JSONDecodeError:
+            print(f'Failed to parse JSON from {filename}!\nDelete file to recreate with defaults')
+            exit(1)
 
     def read_value(self, key):
         return self.read_with_default(key)
