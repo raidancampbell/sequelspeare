@@ -48,9 +48,8 @@ class Preferences:
         self.contents = json.load(file_handle)
 
     def _dump_and_flush(self):
-        with open(self.file_name, 'r+') as file_handle:
+        with open(self.file_name, 'w') as file_handle:
             json.dump(self.contents, file_handle, indent=2, sort_keys=True)
-            os.fsync(file_handle.fileno())
 
     @staticmethod
     def _generate_default_values():
