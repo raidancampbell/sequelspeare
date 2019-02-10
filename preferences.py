@@ -11,13 +11,13 @@ class Preferences:
             self._load_contents(file_handle)
             file_handle.close()
         except FileNotFoundError:
-            if file_handle and not file_handle.closed:
-                file_handle.close()
             with open(self.file_name, 'a+') as _:
                 pass  # just here to create the file.
             self.contents = Preferences._generate_default_values()
             self._dump_and_flush()
         except json.JSONDecodeError:
+            if file_handle and not file_handle.closed:
+                file_handle.close()
             print(f'Failed to parse JSON from {filename}!\nDelete file to recreate with defaults')
             exit(1)
 
@@ -44,6 +44,10 @@ class Preferences:
             print(f'WARN! key "{key}" not found in preferences file, adding under optional...')
             self.contents['optional'][key] = value
         self._dump_and_flush()
+
+    def reload_from_disk(self):
+        with open(self.file_name, 'r') as pref_file:
+            self.contents = json.load(pref_file)
 
     def _load_contents(self, file_handle):
         self.contents = json.load(file_handle)
