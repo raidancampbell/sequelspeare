@@ -18,11 +18,10 @@ class Remindable(AbstractFeature):
         self.scheduler = AsyncIOScheduler()
         self.scheduler.add_job(Remindable.check_reminders, trigger='interval', seconds=5, max_instances=1, coalesce=True, args=[bot])
         self.scheduler.start()
-        self.hiss_whitelist = prefs_singleton.read_value('whitelistnicks')
 
     async def message_filter(self, bot, source, target, message, highlighted):
         if (message.startswith('remind') and highlighted) or message.startswith('!remind'):  # respond to !remind
-            if target not in self.hiss_whitelist:
+            if target not in prefs_singleton.read_value('whitelistnicks'):
                 wait_time, reminder_text = Remindable.parse_remind(message)
                 if reminder_text:
                     await bot.message(source, target + ": I'll remind you about " + reminder_text)
