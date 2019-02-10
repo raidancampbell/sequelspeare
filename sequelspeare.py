@@ -50,6 +50,10 @@ class SequelSpeare(pydle.Client):
         for channel in self.channels_:
             await self.join(channel)
 
+    # ignore "X is now your displayed host" messages
+    async def on_raw_396(self, _):
+        pass
+
     # when the bot is invited to a channel, respond by joining the channel
     async def on_invite(self, dest_channel, inviter):
         print(f'invited to {dest_channel} by {inviter}')
@@ -82,9 +86,4 @@ class SequelSpeare(pydle.Client):
 
 # Execution begins here, if called via command line
 if __name__ == '__main__':
-    import logging
-
-    logging.basicConfig()
-    # logging.getLogger().setLevel(logging.DEBUG)
-
-    SequelSpeare().handle_forever()
+    SequelSpeare()
