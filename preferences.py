@@ -1,6 +1,4 @@
 import json
-import os
-from json import JSONDecodeError
 
 
 class Preferences:
@@ -19,19 +17,22 @@ class Preferences:
                 pass  # just here to create the file.
             self.contents = Preferences._generate_default_values()
             self._dump_and_flush()
-        except JSONDecodeError:
+        except json.JSONDecodeError:
             print(f'Failed to parse JSON from {filename}!\nDelete file to recreate with defaults')
             exit(1)
 
+    # will create the key with a null value if none exists
     def read_value(self, key):
         return self.read_with_default(key)
 
+    # will create the key with the default value if none exists
     def read_with_default(self, key, default=None):
         if key in self.contents:
             return self.contents[key]
         elif key in self.contents['optional']:
             return self.contents['optional'][key]
         else:
+            self.write_value(key, default)
             return default
 
     def write_value(self, key, value):
