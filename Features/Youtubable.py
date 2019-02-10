@@ -16,13 +16,15 @@ class Youtubable(AbstractFeature):
     def description():
         return 'silently adds youtube URLs to a historical playlist.  show playlist with: "!youtube"'
 
-    def __init__(self, oauth_storage_filename='youtube-oauth2.json', client_secret_filename='client_secret.json'):
-        self.playlist_id = None
-        self.oauth_storage_filename = oauth_storage_filename
-        self.client_secret_filename = client_secret_filename
+    def __init__(self):
+        options = prefs_singleton.read_with_default('youtube', {'playlist_id': "",
+                                                                'oauth_storage_filename': 'youtube-oauth2.json',
+                                                                'client_secret_filename': 'client_secret.json'})
+        self.playlist_id = options['playlist_id']
+        self.oauth_storage_filename = options['oauth_storage_filename']
+        self.client_secret_filename = options['client_secret_filename']
 
     async def message_filter(self, bot, source, target, message, highlighted):
-        self.playlist_id = self._get_playlist_id()
 
         if 'youtu.be/' in message or 'youtube.com/watch' in message:
             # grab the URL word
@@ -82,11 +84,3 @@ class Youtubable(AbstractFeature):
                     }
                 }
             }).execute()
-
-    def _get_playlist_id(self):
-        if self.playlist_id:
-            return self.playlist_id
-        options = prefs_singleton.read_with_default('youtube', None)
-        if not options:
-            return None
-        return options['playlist']
