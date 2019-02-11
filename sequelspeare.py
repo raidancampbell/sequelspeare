@@ -6,9 +6,6 @@ import pydle
 
 import Features
 from preferences import prefs_singleton
-from Features.Intelligence import Intelligence
-from Features.Remindable import Remindable
-from Features.Renameable import Renameable
 
 
 class SequelSpeare(pydle.Client):
@@ -29,16 +26,18 @@ class SequelSpeare(pydle.Client):
         self.blacklist = ['AbstractFeature', 'Intelligence', 'Renameable', 'Remindable']
         self.plugins = self.load_features(self.blacklist)
 
-        brain = None
         # brain is just an instance so it can be referenced again
         if prefs_singleton.read_with_default('Intelligence_enabled', True):
+            from Features.Intelligence import Intelligence
             brain = Intelligence()
             self.plugins.append(brain)
-        # renameable needs intelligence to rename itself
-        if prefs_singleton.read_with_default('Renameable_enabled', True):
-            self.plugins.append(Renameable(brain))
+            # renameable needs intelligence to rename itself
+            if prefs_singleton.read_with_default('Renameable_enabled', True):
+                from Features.Renameable import Renameable
+                self.plugins.append(Renameable(brain))
         # Remindable needs access to the bot, so it can send a line at any time
         if prefs_singleton.read_with_default('Remindable_enabled', True):
+            from Features.Remindable import Remindable
             self.plugins.append(Remindable(self))
 
         self.plugins.sort(key=lambda f: f.priority)
