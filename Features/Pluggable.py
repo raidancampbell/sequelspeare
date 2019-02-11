@@ -18,7 +18,34 @@ class Pluggable(AbstractFeature):
             return True
         if await Pluggable.plugin_describe(bot, source, target, message, highlighted):
             return True
+        if await Pluggable.reload(bot, source, target, message, highlighted):
+            return True
         return False
+
+    @staticmethod
+    async def reload(bot, source, target, message, highlighted):
+        if not ((message.startswith('reload') and highlighted) or message.startswith('!reload')):
+            return False
+        prefs_singleton.reload_from_disk()
+
+        reloaded_features = bot.reload_features(blacklist=bot.blacklist, existing_features=bot.plugins)
+        old_str = [type(feature).__name__ for feature in bot.plugins]
+        new_str = [type(feature).__name__ for feature in reloaded_features]
+
+        new_features = set(new_str).difference(set(old_str))
+
+        for feature in bot.plugins:
+            if type(feature).__name__ not in bot.blacklist:
+                bot.plugins.remove(feature)
+        bot.plugins.extend(reloaded_features)
+        bot.plugins.sort(key=lambda f: f.priority)
+
+        if new_features:
+            await bot.message(source, f'plugins reloaded. new plugin[s] [{",".join(new_features)}] were imported')
+        else:
+            await bot.message(source, f'plugins reloaded. No new plugins imported')
+
+        return True
 
     @staticmethod
     async def control_plugins(bot, source, target, message, highlighted):

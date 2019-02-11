@@ -26,8 +26,8 @@ class SequelSpeare(pydle.Client):
 
         self.preferences = prefs_singleton
 
-        blacklist = ['AbstractFeature', 'Intelligence', 'Renameable', 'Remindable']
-        self.plugins = self.load_features(blacklist)
+        self.blacklist = ['AbstractFeature', 'Intelligence', 'Renameable', 'Remindable']
+        self.plugins = self.load_features(self.blacklist)
 
         brain = None
         # brain is just an instance so it can be referenced again
@@ -100,6 +100,33 @@ class SequelSpeare(pydle.Client):
                 clazz = getattr(module, class_name)
                 enabled_features.append(clazz())
         return enabled_features
+
+    @staticmethod
+    def reload_features(blacklist, existing_features):
+        existing_features_str = []
+        reloaded_features = []
+        # existing features need to be reloaded
+        for feature in existing_features:
+            existing_features_str.append(type(feature).__name__)
+
+        for module_name in SequelSpeare._find_features():
+            class_name = module_name.split('.')[-1]
+            # if the module is enabled, and not blacklisted, and already loaded:
+            if prefs_singleton.read_with_default(f'{class_name}_enabled', True) and class_name not in blacklist and class_name:
+                for feature in existing_features:
+                    if type(feature).__name__ == module_name:
+                        # reload it and re-instantiate it
+                        importlib.reload(feature)
+                module = importlib.import_module(module_name)
+                clazz = getattr(module, class_name)
+                reloaded_features.append(clazz())
+            # if the module is enabled, and not blacklisted, but has not already been loaded:
+            elif prefs_singleton.read_with_default(f'{class_name}_enabled', True) and class_name not in blacklist and class_name not in existing_features_str:
+                # import it and instantiate it
+                module = importlib.import_module(module_name)
+                clazz = getattr(module, class_name)
+                reloaded_features.append(clazz())
+        return reloaded_features
 
 
 # Execution begins here, if called via command line
