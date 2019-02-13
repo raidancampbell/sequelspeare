@@ -16,6 +16,8 @@ class SequelSpeare(pydle.Client):
         server_address = prefs_singleton.read_value('serveraddress')
         server_port = int(prefs_singleton.read_value('serverport'))
         self.channels_ = prefs_singleton.read_value('channels')
+        self.PING_TIMEOUT = 185
+        self.RECONNECT_MAX_ATTEMPTS = None  # always try to reconnect
 
         super().__init__(bot_nick, realname=bot_real_name)
         loop = asyncio.get_event_loop()
@@ -43,8 +45,28 @@ class SequelSpeare(pydle.Client):
         self.plugins.sort(key=lambda f: f.priority)
         loop.run_forever()
 
+    async def disconnect_with_reconnect(self):
+        try:
+            await self._disconnect(False)
+        except OSError as e:
+            print('exception while reconnecting: ' + str(type(e)) + str(e))
+            print('rescheduling ping checker...')
+            print('connection retries and timeouts will be lost.')
+            if self._ping_checker_handle:
+                self._ping_checker_handle.cancel()
+            self._ping_checker_handle = self.eventloop.create_task(
+                self._perform_ping_timeout(self.PING_TIMEOUT))
+
+    async def on_data_error(self, exception):
+        self.logger.error('Encountered error on socket.', exc_info=(type(exception), exception, None))
+        if type(exception) == TimeoutError:
+            await self.disconnect_with_reconnect()
+        else:
+            await self.disconnect(expected=False)
+
     async def on_connect(self):
         print('joined network')
+        await super().on_connect()
         # connect to all the channels we want to
         for channel in self.channels_:
             await self.join(channel)
